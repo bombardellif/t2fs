@@ -4,7 +4,7 @@
 #include "t2fs.h"
 
 typedef struct s_IndirectionBlock{
-	dword dataPtr[];
+	DWORD dataPtr[];
 } IndirectionBlock;
 
 void IB_IndirectionBlock(IndirectionBlock* this, BYTE* block);

@@ -1,15 +1,14 @@
 #include "FreeSpaceManager.h"
 
-
-void FSM_delete(dword address)
+void FSM_delete(DWORD address)
 {
 }
 
-dword FSM_getFreeAddress()
+DWORD FSM_getFreeAddress()
 {
 	return 0;
 }
 
-void FSM_markAsUsed(dword address)
+void FSM_markAsUsed(DWORD address)
 {
 }

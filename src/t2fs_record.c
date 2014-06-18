@@ -1,7 +1,7 @@
 #include "t2fs_record.h"
 
 
-void TR_t2fs_record(t2fs_record* this, BYTE typeVal, char* name, DOWRD blocksFileSize, DOWRD bytesFileSize)
+void TR_t2fs_record(t2fs_record* this, BYTE typeVal, char* name, DWORD blocksFileSize, DWORD bytesFileSize)
 {
 }
 

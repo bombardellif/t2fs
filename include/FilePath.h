@@ -1,7 +1,7 @@
 #ifndef FILE_PATH_H
 #define FILE_PATH_H
 
-STRUCT s_FilePath{
+typedef struct s_FilePath {
 	char* path;
 } FilePath;
 

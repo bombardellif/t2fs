@@ -1,11 +1,11 @@
 #include "DirectoryBlock.h"
 
 
-void DB_DirectoryBlock(DirectoryBlock* directoryBlock, byte* block)
+void DB_DirectoryBlock(DirectoryBlock* this, BYTE* block)
 {
 }
 
-t2fs_record* DB_findByName(DirectoryBlock* directoryBlock, char* name)
+t2fs_record* DB_findByName(DirectoryBlock* this, char* name)
 {
 	return 0;
 }

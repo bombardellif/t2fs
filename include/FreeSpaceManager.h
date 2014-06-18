@@ -7,8 +7,8 @@ typedef struct s_FreeSpaceManager{
 	t2fs_record bitmap;
 } FreeSpaceManager;
 
-void FSM_delete(dword address);
-dword FSM_getFreeAddress();
-void FSM_markAsUsed(dword address);
+void FSM_delete(DWORD address);
+DWORD FSM_getFreeAddress();
+void FSM_markAsUsed(DWORD address);
 
 #endif
