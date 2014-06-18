@@ -34,7 +34,8 @@ include Makefile.mk
 OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 
 # Object Files
-OBJECTFILES=
+OBJECTFILES= \
+	${OBJECTDIR}/src/t2fs.o
 
 
 # C Compiler Flags
@@ -55,13 +56,18 @@ LDLIBSOPTIONS=
 
 # Build Targets
 .build-conf: ${BUILD_SUBPROJECTS}
-	"${MAKE}"  -f nbproject/Makefile-${CND_CONF}.mk ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/libt2fs.a
+	"${MAKE}"  -f nbproject/Makefile-${CND_CONF}.mk lib/libt2fs.a
 
-${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/libt2fs.a: ${OBJECTFILES}
-	${MKDIR} -p ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}
-	${RM} ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/libt2fs.a
-	${AR} -rv ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/libt2fs.a ${OBJECTFILES} 
-	$(RANLIB) ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/libt2fs.a
+lib/libt2fs.a: ${OBJECTFILES}
+	${MKDIR} -p lib
+	${RM} lib/libt2fs.a
+	${AR} -rv lib/libt2fs.a ${OBJECTFILES} 
+	$(RANLIB) lib/libt2fs.a
+
+${OBJECTDIR}/src/t2fs.o: src/t2fs.c 
+	${MKDIR} -p ${OBJECTDIR}/src
+	${RM} "$@.d"
+	$(COMPILE.c) -g -Wall -Iinclude -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/t2fs.o src/t2fs.c
 
 # Subprojects
 .build-subprojects:
@@ -69,7 +75,7 @@ ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/libt2fs.a: ${OBJECTFILES}
 # Clean Targets
 .clean-conf: ${CLEAN_SUBPROJECTS}
 	${RM} -r ${CND_BUILDDIR}/${CND_CONF}
-	${RM} ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/libt2fs.a
+	${RM} lib/libt2fs.a
 
 # Subprojects
 .clean-subprojects:

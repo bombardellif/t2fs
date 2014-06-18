@@ -34,7 +34,8 @@ include Makefile.mk
 OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 
 # Object Files
-OBJECTFILES=
+OBJECTFILES= \
+	${OBJECTDIR}/src/t2fs.o
 
 
 # C Compiler Flags
@@ -62,6 +63,11 @@ ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/libt2fs.a: ${OBJECTFILES}
 	${RM} ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/libt2fs.a
 	${AR} -rv ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/libt2fs.a ${OBJECTFILES} 
 	$(RANLIB) ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/libt2fs.a
+
+${OBJECTDIR}/src/t2fs.o: src/t2fs.c 
+	${MKDIR} -p ${OBJECTDIR}/src
+	${RM} "$@.d"
+	$(COMPILE.c) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/t2fs.o src/t2fs.c
 
 # Subprojects
 .build-subprojects:

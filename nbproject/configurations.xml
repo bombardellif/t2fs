@@ -4,6 +4,8 @@
     <logicalFolder name="HeaderFiles"
                    displayName="Header Files"
                    projectFiles="true">
+      <itemPath>include/apidisk.h</itemPath>
+      <itemPath>include/t2fs.h</itemPath>
     </logicalFolder>
     <logicalFolder name="ResourceFiles"
                    displayName="Resource Files"
@@ -12,6 +14,7 @@
     <logicalFolder name="SourceFiles"
                    displayName="Source Files"
                    projectFiles="true">
+      <itemPath>src/t2fs.c</itemPath>
     </logicalFolder>
     <logicalFolder name="TestFiles"
                    displayName="Test Files"
@@ -25,6 +28,10 @@
       <itemPath>Makefile.mk</itemPath>
     </logicalFolder>
   </logicalFolder>
+  <sourceRootList>
+    <Elem>src</Elem>
+    <Elem>include</Elem>
+  </sourceRootList>
   <projectmakefile>Makefile.mk</projectmakefile>
   <confs>
     <conf name="Debug" type="3">
@@ -34,9 +41,22 @@
         <rebuildPropChanged>false</rebuildPropChanged>
       </toolsSet>
       <compileType>
+        <cTool>
+          <incDir>
+            <pElem>include</pElem>
+          </incDir>
+          <warningLevel>2</warningLevel>
+        </cTool>
         <archiverTool>
+          <output>lib/libt2fs.a</output>
         </archiverTool>
       </compileType>
+      <item path="include/apidisk.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="include/t2fs.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/t2fs.c" ex="false" tool="0" flavor2="0">
+      </item>
     </conf>
     <conf name="Release" type="3">
       <toolsSet>
@@ -60,6 +80,12 @@
         <archiverTool>
         </archiverTool>
       </compileType>
+      <item path="include/apidisk.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="include/t2fs.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/t2fs.c" ex="false" tool="0" flavor2="0">
+      </item>
     </conf>
   </confs>
 </configurationDescriptor>

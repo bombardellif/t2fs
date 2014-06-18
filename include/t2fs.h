@@ -14,98 +14,98 @@ typedef int t2fs_file;
 
 #define TYPEVAL_REGULAR     0x01
 #define TYPEVAL_DIRETORIO   0x02
-#define TYPEVAL_INVALIDO    0xFF    // qualquer outro valor também é invalido
+#define TYPEVAL_INVALIDO    0xFF    // qualquer outro valor tambÃ©m Ã© invalido
 
-/** Registro de diretório (entrada de diretório) */
+/** Registro de diretÃ³rio (entrada de diretÃ³rio) */
 struct t2fs_record {
-    /* Tipo da entrada. Indica se o registro é válido e, se for, o tipo do arquivo (regular ou diretório).
-    •	0xFF, registro inválido (não associado a nenhum arquivos);
-    •	0x01 arquivo regular;
-    •	0x02, arquivo de diretório.
+    /* Tipo da entrada. Indica se o registro Ã© vÃ¡lido e, se for, o tipo do arquivo (regular ou diretÃ³rio).
+    Â•	0xFF, registro invÃ¡lido (nÃ£o associado a nenhum arquivos);
+    Â•	0x01 arquivo regular;
+    Â•	0x02, arquivo de diretÃ³rio.
     */
     BYTE    TypeVal;        //   0:  1 byte
 
-    /* Nome do arquivo. : string com caracteres ASCII (0x21 até 0x7A), case sensitive.
-    O string deve terminar com o caractere especial “\0” (0x00). */
+    /* Nome do arquivo. : string com caracteres ASCII (0x21 atÃ© 0x7A), case sensitive.
+    O string deve terminar com o caractere especial Â“\0Â” (0x00). */
     char    name[39];       //   1: 39 bytes
 
-    /* Tamanho do arquivo. Expresso, apenas, em número de blocos de dados
-    (não estão inclusos eventuais blocos de índice). */
+    /* Tamanho do arquivo. Expresso, apenas, em nÃºmero de blocos de dados
+    (nÃ£o estÃ£o inclusos eventuais blocos de Ã­ndice). */
     DWORD   blocksFileSize; //  40:  4 bytes
 
-    /* Tamanho do arquivo. Expresso em número de bytes.
-    Notar que o tamanho de um arquivo não é um múltiplo do tamanho dos blocos de dados.
-    Portanto, o último bloco de dados pode não estar totalmente utilizado.
-    Assim, a detecção do término do arquivo dependerá da observação desse campo do registro. */
+    /* Tamanho do arquivo. Expresso em nÃºmero de bytes.
+    Notar que o tamanho de um arquivo nÃ£o Ã© um mÃºltiplo do tamanho dos blocos de dados.
+    Portanto, o Ãºltimo bloco de dados pode nÃ£o estar totalmente utilizado.
+    Assim, a detecÃ§Ã£o do tÃ©rmino do arquivo dependerÃ¡ da observaÃ§Ã£o desse campo do registro. */
     DWORD   bytesFileSize;  //  44:  4 bytes
 
     /* Dois ponteiros diretos, para blocos de dados do arquivo */
     DWORD   dataPtr[2];     //  48:  8 bytes
 
-    /* Ponteiro de indireção simples,
-    que aponta para um bloco de índices onde estão ponteiros para blocos de dados do arquivo. */
+    /* Ponteiro de indireÃ§Ã£o simples,
+    que aponta para um bloco de Ã­ndices onde estÃ£o ponteiros para blocos de dados do arquivo. */
     DWORD   singleIndPtr;   //  56:  4 bytes
 
-    /* Ponteiro de indireção dupla,
-    que aponta para um bloco de índices onde estão outros ponteiros para blocos de índice.
-    Esses últimos ponteiros apontam para blocos de dados do arquivo. */
+    /* Ponteiro de indireÃ§Ã£o dupla,
+    que aponta para um bloco de Ã­ndices onde estÃ£o outros ponteiros para blocos de Ã­ndice.
+    Esses Ãºltimos ponteiros apontam para blocos de dados do arquivo. */
     DWORD   doubleIndPtr;   //  60:  4 bytes
 
 } __attribute__((packed));
 
 /** Superbloco */
 struct t2fs_superbloco {
-    /* Identificação do sistema de arquivo. É formado pelas letras “T2FS”. */
+    /* IdentificaÃ§Ã£o do sistema de arquivo. Ã‰ formado pelas letras Â“T2FSÂ”. */
     char    Id[4];          // :   4 bytes
 
-    /* Versão atual desse sistema de arquivos: (valor fixo 7DE=2014; 1=1 semestre). */
+    /* VersÃ£o atual desse sistema de arquivos: (valor fixo 7DE=2014; 1=1 semestre). */
     WORD    Version;        // :   2 bytes
 
     /* Quantidade de setores  que formam o superbloco. (fixo em 1 setor) */
     WORD    SuperBlockSize; // :   2 bytes
 
-    /* Tamanho total da partição T2FS, incluindo o tamanho do superblock. (1.048.832 bytes) */
+    /* Tamanho total da partiÃ§Ã£o T2FS, incluindo o tamanho do superblock. (1.048.832 bytes) */
     DWORD   DiskSize;       // :   4 bytes
 
-    /* Quantidade total de blocos de dados na partição T2FS (1024 blocos). */
+    /* Quantidade total de blocos de dados na partiÃ§Ã£o T2FS (1024 blocos). */
     DWORD   NofBlocks;      // :   4 bytes
 
     /* Tamanho de um bloco. (1024 bytes) */
     DWORD   BlockSize;      // :   4 bytes
 
-    /* Não usados */
+    /* NÃ£o usados */
     char    Reserved[108];  // : 108 bytes
 
-    /* Registro que descreve o arquivo que mantém o bitmap de blocos livres e ocupados */
+    /* Registro que descreve o arquivo que mantÃ©m o bitmap de blocos livres e ocupados */
     struct t2fs_record BitMapReg;  // :  64 bytes
 
-    /* Registro que descreve o arquivo que mantém as entradas do diretório raiz */
+    /* Registro que descreve o arquivo que mantÃ©m as entradas do diretÃ³rio raiz */
     struct t2fs_record RootDirReg; // :  64 bytes
 
 } __attribute__((packed));
 
-/** Retorna a identificação dos implementadores do T2FS. */
+/** Retorna a identificaÃ§Ã£o dos implementadores do T2FS. */
 char *t2fs_identify (void);
 
-/** Função usada para criar um novo arquivo no disco. */
+/** FunÃ§Ã£o usada para criar um novo arquivo no disco. */
 t2fs_file t2fs_create (char *nome);
 
-/** Função usada para remover (apagar) um arquivo do disco. */
+/** FunÃ§Ã£o usada para remover (apagar) um arquivo do disco. */
 int t2fs_delete (char *nome);
 
-/** Função que abre um arquivo existente no disco. */
+/** FunÃ§Ã£o que abre um arquivo existente no disco. */
 t2fs_file t2fs_open (char *nome);
 
-/** Função usada para fechar um arquivo. */
+/** FunÃ§Ã£o usada para fechar um arquivo. */
 int t2fs_close (t2fs_file handle);
 
-/** Função usada para realizar a leitura em um arquivo. */
+/** FunÃ§Ã£o usada para realizar a leitura em um arquivo. */
 int t2fs_read (t2fs_file handle, char *buffer, int size);
 
-/** Função usada para realizar a escrita em um arquivo. */
+/** FunÃ§Ã£o usada para realizar a escrita em um arquivo. */
 int t2fs_write (t2fs_file handle, char *buffer, int size);
 
-/** Altera o contador de posição (current pointer) do arquivo. */
+/** Altera o contador de posiÃ§Ã£o (current pointer) do arquivo. */
 int t2fs_seek (t2fs_file handle, unsigned int offset);
 
 
