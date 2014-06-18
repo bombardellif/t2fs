@@ -5,10 +5,10 @@
 
 typedef struct s_OpenRecord{
 	t2fs_record record;
-	dword blockAddress;
+	DWORD blockAddress;
 	unsigned int count;
 } OpenRecord;
 
-void OR_incCount(OpenRecord* openRecord);
+void OR_incCount(OpenRecord* this);
 
 #endif

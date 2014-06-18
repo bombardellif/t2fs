@@ -1,6 +1,6 @@
 #include "OpenRecord.h"
 
 
-void OR_incCount(OpenRecord* openRecord)
+void OR_incCount(OpenRecord* this)
 {
 }

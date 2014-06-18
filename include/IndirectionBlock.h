@@ -7,8 +7,8 @@ typedef struct s_IndirectionBlock{
 	dword dataPtr[];
 } IndirectionBlock;
 
-void IB_IndirectionBlock(IndirectionBlock* indirectionBlock, byte* block);
-t2fs_record* IB_find(IndirectionBlock* indirectionBlock, char* name, int level, byte* block, dword* blockAddress);
-int IB_allocateNewDirectoryBlock(IndirectionBlock* indirectionBlock, int level, byte* block, dword* blockAddress);
+void IB_IndirectionBlock(IndirectionBlock* this, BYTE* block);
+t2fs_record* IB_find(IndirectionBlock* this, char* name, int level, BYTE* block, DWORD* blockAddress);
+int IB_allocateNewDirectoryBlock(IndirectionBlock* this, int level, BYTE* block, DWORD* blockAddress);
 
 #endif

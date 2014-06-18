@@ -6,6 +6,6 @@ typedef struct s_OpenFile{
     unsigned int currentPosition;
 } OpenFile;
 
-void OF_OpenFile(OpenFile* openFile, int recordIndex);
+void OF_OpenFile(OpenFile* this, int recordIndex);
 
 #endif

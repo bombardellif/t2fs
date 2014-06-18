@@ -1,6 +1,6 @@
 #include "OpenFile.h"
 
 
-void OF_OpenFile(OpenFile* openFile, int recordIndex)
+void OF_OpenFile(OpenFile* this, int recordIndex)
 {
 }

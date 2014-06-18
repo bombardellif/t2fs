@@ -1,27 +1,21 @@
-#include <string>
-#include <vector>
-#include <list>
-#include <iostream>
-#include <assert.h>
-
 #include "FilePath.h"
 
 
-void FilePath::FilePath(java::lang::String path)
+void FP_FilePath(FilePath* this, char* path)
 {
 }
 
-FilePath FilePath::withoutLastNode()
-{
-	return 0;
-}
-
-java::lang::String FilePath::getNextNode()
+FilePath FP_withoutLastNode(FilePath* this)
 {
 	return 0;
 }
 
-boolean FilePath::hasNextNode()
+char* FP_getNextNode(FilePath* this)
+{
+	return 0;
+}
+
+boolean FP_hasNextNode(FilePath* this)
 {
 	return 0;
 }

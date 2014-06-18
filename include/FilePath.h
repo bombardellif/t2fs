@@ -1,31 +1,13 @@
 #ifndef FILE_PATH_H
 #define FILE_PATH_H
 
-#include <string>
-#include <vector>
-#include <list>
-#include <iostream>
-#include <assert.h>
+STRUCT s_FilePath{
+	char* path;
+} FilePath;
 
-#include "java/lang/String.h"
+void FilePath(FilePath* this, char* path);
+FilePath withoutLastNode(FilePath* this);
+char* getNextNode(FilePath* this);
+boolean hasNextNode(FilePath* this);
 
-class FilePath
-{
-private:
-	java::lang::String path;
-
-
-public:
-	void FilePath(java::lang::String path);
-
-	FilePath withoutLastNode();
-
-	/**
-	 *  
-	 */
-	java::lang::String getNextNode();
-
-	boolean hasNextNode();
-
-};
 #endif

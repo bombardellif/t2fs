@@ -1,16 +1,16 @@
 #include "IndirectionBlock.h"
 
 
-void IB_IndirectionBlock(IndirectionBlock* indirectionBlock, byte* block)
+void IB_IndirectionBlock(IndirectionBlock* this, BYTE* block)
 {
 }
 
-t2fs_record* IB_find(IndirectionBlock* indirectionBlock, char* name, int level, byte* block, dword* blockAddress)
+t2fs_record* IB_find(IndirectionBlock* this, char* name, int level, BYTE* block, DWORD* blockAddress)
 {
 	return 0;
 }
 
-int IB_allocateNewDirectoryBlock(IndirectionBlock* indirectionBlock, int level, byte* block, dword* blockAddress)
+int IB_allocateNewDirectoryBlock(IndirectionBlock* this, int level, BYTE* block, DWORD* blockAddress)
 {
 	return 0;
 }
