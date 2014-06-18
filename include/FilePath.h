@@ -8,6 +8,6 @@ typedef struct s_FilePath {
 void FilePath(FilePath* this, char* path);
 FilePath withoutLastNode(FilePath* this);
 char* getNextNode(FilePath* this);
-boolean hasNextNode(FilePath* this);
+BOOL hasNextNode(FilePath* this);
 
 #endif
