@@ -6,11 +6,20 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <malloc.h>
 
 extern FileSystem fileSystem;
 
-void TR_t2fs_record(Record* this, BYTE typeVal, char* name, DWORD blocksFileSize, DWORD bytesFileSize)
+void TR_Record(Record* this, BYTE typeVal, char* name, DWORD blocksFileSize, DWORD bytesFileSize)
 {
+    strncpy(this->name, name, TR_FILENAME_MAXSIZE);
+    
+    this->TypeVal = typeVal;
+    this->blocksFileSize = blocksFileSize;
+    this->bytesFileSize = bytesFileSize;
+    this->dataPtr[0] = this->dataPtr[1] = FS_NULL_BLOCK_POINTER;
+    this->singleIndPtr = FS_NULL_BLOCK_POINTER;
+    this->doubleIndPtr = FS_NULL_BLOCK_POINTER;
 }
 
 Record* TR_find(Record* this, FilePath* const filePath, OpenRecord* openRecord, BYTE* block, Record*(*find)(const DirectoryBlock* const this, const char* const notUsed), BYTE blockTrace[][FS_MAX_TRACE_DEPTH], DWORD* recordPointerTrace[], DWORD blockAddress[])

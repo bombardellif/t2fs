@@ -31,7 +31,7 @@ t2fs_file FS_create(FilePath* const filePath)
     
     if (parentRecord != NULL){
         Record newRecord;
-        TR_t2fs_record(&newRecord, TYPEVAL_REGULAR, FP_getLastNode(filePath), 0, 0);
+        TR_Record(&newRecord, TYPEVAL_REGULAR, FP_getLastNode(filePath), 0, 0);
 
         OpenRecord newOpenRecord;
         int addRecordSignal = TR_addRecord(parentRecord, newRecord, &newOpenRecord);

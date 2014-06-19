@@ -15,7 +15,8 @@
 #define T2FS_ALLOCATENEWDIRBLOCK_SUCCESS 99
 #define T2FS_ADDRECORD_DIDNT_FIND -5
 
-void TR_t2fs_record(Record* this, BYTE typeVal, char* name, DWORD blocksFileSize, DWORD bytesFileSize);
+void TR_Record(Record* this, BYTE typeVal, char* name, DWORD blocksFileSize, DWORD bytesFileSize);
+void TR_destroy(Record* this);
 Record* TR_find(Record* this, FilePath* const filePath, OpenRecord* openRecord, BYTE* block, Record*(*find)(const DirectoryBlock* const this, const char* const notUsed), BYTE blockTrace[][FS_MAX_TRACE_DEPTH], DWORD* recordPointerTrace[], DWORD blockAddress[]);
 Record* TR_findRecordInRecord(Record* this, OpenRecord* openRecord, BYTE* block, Record*(*find)(const DirectoryBlock* const this, const char* const notUsed), char* param);
 int TR_allocateNewBlock(DWORD* blockAddress);
