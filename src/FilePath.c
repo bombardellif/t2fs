@@ -5,6 +5,8 @@
 #include <string.h>
 #include "t2fs.h"
 
+static const char DS_STR[] = "/";
+
 void FP_FilePath(FilePath* this, char* path)
 {
     this->pathWithoutLastNode = this->path = this->currentToken = NULL;
@@ -64,10 +66,10 @@ static char* FP__nextNode(FilePath* this)
     if (!this->path) {
         return NULL;
     } else if (this->parsed) {
-        return this->currentToken = strtok(NULL, DS);
+        return this->currentToken = strtok(NULL, DS_STR);
     } else {
         this->parsed = TRUE;
-        return this->currentToken = strtok(this->path, DS);
+        return this->currentToken = strtok(this->path, DS_STR);
     }
 }
 

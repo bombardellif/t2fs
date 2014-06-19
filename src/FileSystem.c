@@ -46,7 +46,7 @@ t2fs_file FS_create(FilePath* const filePath)
             }else{
                 //If modified the root directory then save it. Actually save the superblock that has the root directory
                 //Supose SuperBlock doesn't have alligment paddings, i.e., sizeof(SuperBlock) <= SuperBlock.SuperBlockSize
-                writingSignal = DAM_write(FS_SUPERBLOCK_ADDRESS, &fileSystem.superBlock);
+                writingSignal = DAM_write(FS_SUPERBLOCK_ADDRESS, (BYTE*)&fileSystem.superBlock);
             }
             if (writingSignal != 0){
                 addRecordSignal = TR_ADDRECORD_FAIL;
@@ -137,7 +137,7 @@ t2fs_file FS_createHandle(OpenRecord openRecord)
     }
 }
 
-Record* FS_findRecordInArray(DWORD dataPtr[], BYTE* block, DWORD* blockAddress, Record*(*find)(DirectoryBlock*, char* param), char* name, int count)
+Record* FS_findRecordInArray(DWORD dataPtr[], BYTE* block, DWORD* blockAddress, Record*(*find)(const DirectoryBlock* const,const char* param), char* name, int count)
 {
     if (count <= 0 || name != NULL || dataPtr != NULL)
         return NULL;
@@ -183,7 +183,7 @@ int FS_delete(FilePath* const filePath)
     DWORD blockAddressTrace[FS_MAX_TRACE_DEPTH];
     
     //Find parent, starting from the root
-    Record* targetRecord = TR_find(&fileSystem.superBlock.RootDirReg, &filePath, &targetOpenRecord, targetBlock, DB_findByName, blockTrace, recordPointerTrace, blockAddressTrace);
+    Record* targetRecord = TR_find(&fileSystem.superBlock.RootDirReg, filePath, &targetOpenRecord, targetBlock, DB_findByName, blockTrace, recordPointerTrace, blockAddressTrace);
     
     // Check for errors from TR_find
     

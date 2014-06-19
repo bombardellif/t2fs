@@ -1,4 +1,5 @@
 #include "OpenRecord.h"
+#include <string.h>
 
 
 void OR_incCount(OpenRecord* this)

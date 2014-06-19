@@ -2,7 +2,9 @@
 #include "FileSystem.h"
 #include "DiscAccessManager.h"
 #include "FreeSpaceManager.h"
+#include "t2fs_record.h"
 #include <stdlib.h>
+#include <string.h>
 
 extern FileSystem fileSystem;
 
@@ -13,7 +15,7 @@ void IB_IndirectionBlock(IndirectionBlock* this, BYTE* block)
     this->dataPtr = (DWORD*) block;
 }
 
-Record* IB_find(IndirectionBlock* this, char* name, int level, BYTE* block, DWORD* blockAddress, Record*(*find)(DirectoryBlock*, char* param))
+Record* IB_find(IndirectionBlock* this, char* name, int level, BYTE* block, DWORD* blockAddress, Record*(*find)(const DirectoryBlock* const, const char* param))
 {
     if (this == NULL || this->dataPtr == NULL || name == NULL)
         return NULL;
@@ -48,7 +50,23 @@ Record* IB_find(IndirectionBlock* this, char* name, int level, BYTE* block, DWOR
 
 int IB_allocateNewDirectoryBlock(IndirectionBlock* this, int level, BYTE* block, DWORD* blockAddress)
 {
-	return 0;
+	if (this == NULL)
+        return IB_INVALID_ARGUMENT;
+    
+    int writtenPos = TR_findEmptyPositionInArray(this->dataPtr, fileSystem.superBlock.BlockSize / sizeof(DWORD));
+
+    if (writtenPos >= 0){
+        if (TR_allocateNewBlock(blockAddress) == TR_ADDRECORD_SUCCESS){
+            //Initialize block with null pointers
+            memset(block, FS_NULL_BLOCK_POINTER, fileSystem.superBlock.BlockSize);
+            //updates data pointer with new block address
+            this->dataPtr[writtenPos] = *blockAddress;
+            //@TODO save
+            return IB_SUCCESS;
+        }else{
+            return IB_CANT_ALLOCATE;
+        }
+    }
 }
 
 int IB_findBlockByNumber(IndirectionBlock* this, int level, DWORD number, BYTE* block, DWORD* blockAddress)
@@ -68,10 +86,10 @@ int IB_findBlockByNumber(IndirectionBlock* this, int level, DWORD number, BYTE* 
         // Read the single indirection block
         if ((returnCode = DAM_read(this->dataPtr[singleIndPointerNumber], block)) == 0) {
 
-            IndirectionBlock* indirectionBlock;
-            IB_IndirectionBlock(indirectionBlock, block);
+            IndirectionBlock indirectionBlock;
+            IB_IndirectionBlock(&indirectionBlock, block);
             // find in the indirection block the required block
-            returnCode = IB_findBlockByNumber(indirectionBlock, 1, numberInIndirectionPointer, block, blockAddress);
+            returnCode = IB_findBlockByNumber(&indirectionBlock, 1, numberInIndirectionPointer, block, blockAddress);
         }
     }
     
@@ -96,15 +114,15 @@ int IB_freeBlocks(IndirectionBlock* this, int level)
         }
     } else if (level == 2) {
         
-        BYTE* block;
+        BYTE block[fileSystem.superBlock.SuperBlockSize];
         for (int i=0; i<numOfPointersInBlock; i++) {
             
             // Read the single indirection block
             if (this->dataPtr[i] != FS_NULL_BLOCK_POINTER) {
-                if ((returnCode = DAM_read(this->dataPtr[i], &block)) == 0) {
+                if ((returnCode = DAM_read(this->dataPtr[i], block)) == 0) {
 
                     IndirectionBlock indirectionBlock;
-                    IB_IndirectionBlock(&indirectionBlock, &block);
+                    IB_IndirectionBlock(&indirectionBlock, block);
 
                     // free all the blocks in this inode, if an error happens, break the loop and returns the error code
                     if ((returnCode = IB_freeBlocks(&indirectionBlock, 1)) != 0) {
