@@ -25,6 +25,7 @@ int DAM_write(DWORD blockAddress, BYTE* data)
                 break;
 
             data += BYTES_PER_SECTOR;
+            sector++;
         }
     } else {
         successCode = DAM_ERROR_NULL_DISC_POINTER;
@@ -54,6 +55,7 @@ int DAM_read(DWORD blockAddress, BYTE* data)
                 break;
 
             data += BYTES_PER_SECTOR;
+            sector++;
         }
     } else {
         successCode = DAM_ERROR_NULL_DISC_POINTER;

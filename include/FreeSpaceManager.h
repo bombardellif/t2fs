@@ -3,12 +3,8 @@
 
 #include "t2fs.h"
 
-typedef struct s_FreeSpaceManager{
-	Record bitmap;
-} FreeSpaceManager;
-
-void FSM_delete(DWORD address);
-DWORD FSM_getFreeAddress();
-void FSM_markAsUsed(DWORD address);
+int FSM_delete(DWORD address);
+int FSM_getFreeAddress(DWORD* address);
+int FSM_markAsUsed(DWORD address);
 
 #endif
