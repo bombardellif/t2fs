@@ -6,13 +6,14 @@
 #include "OpenRecord.h"
 
 #define T2FS_RECORD_MODIFIED -1
+#define T2FS_NULL_BLOCK_POINTER 0xFFFFFFFF
 
-void TR_t2fs_record(t2fs_record* this, BYTE typeVal, char* name, DWORD blocksFileSize, DWORD bytesFileSize);
-t2fs_record* TR_find(t2fs_record* this, FilePath filepath, OpenRecord* openRecord, BYTE* block, BYTE blockTrace[], DWORD* recordPointerTrace[], DWORD blockAddress[]);
-int TR_addRecord(t2fs_record* this, t2fs_record newRecord, OpenRecord* newOpenRecord);
-void TR_freeBlocks(t2fs_record* this);
-t2fs_record* TR_findEmptyEntry(t2fs_record* this, OpenRecord* openRecord, BYTE* block);
-void TR_allocateNewDirectoryBlock(t2fs_record* this, BYTE* block, DWORD* blockAddress);
+void TR_t2fs_record(Record* this, BYTE typeVal, char* name, DWORD blocksFileSize, DWORD bytesFileSize);
+Record* TR_find(Record* this, FilePath filePath, OpenRecord* openRecord, BYTE* block, BYTE blockTrace[], DWORD* recordPointerTrace[], DWORD blockAddress[]);
+int TR_addRecord(Record* this, t2fs_record newRecord, OpenRecord* newOpenRecord);
+void TR_freeBlocks(Record* this);
+Record* TR_findEmptyEntry(Record* this, OpenRecord* openRecord, BYTE* block);
+void TR_allocateNewDirectoryBlock(Record* this, BYTE* block, DWORD* blockAddress);
 
 
 #endif

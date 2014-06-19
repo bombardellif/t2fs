@@ -7,10 +7,14 @@ FileSystem fileSystem;
 
 t2fs_file FS_create(FilePath* filePath)
 {
-    //Directory Path until folde to create new file
+    if (filePath == NULL){
+        return FS_CREATEPROBLEM_INVALID_PATH;
+    }
+    //Directory Path until folder to create new file
 	FilePath dirPath;
     FP_withoutLastNode(filePath, &dirPath);
     //Record of the parent who will get new child
+    assert fileSystem.superBlock.BlockSize > 0;
     OpenRecord parentOpenRecord;
     BYTE parentBlock[fileSystem.superBlock.BlockSize];
     
@@ -34,7 +38,7 @@ t2fs_file FS_create(FilePath* filePath)
         }else{
             //If modified the root directory then save it. Actually save the superblock that has the root directory
             //Supose SuperBlock doesn't have alligment paddings, i.e., sizeof(SuperBlock) <= SuperBlock.SuperBlockSize
-            writingSignal = DAM_write(FS_SUPERBLOCK_ADDRESS, SuperBlock, sizeof(SuperBlock));
+            writingSignal = DAM_write(FS_SUPERBLOCK_ADDRESS, fileSystem.superBlock, sizeof(SuperBlock));
         }
     }else if(addRecordSignal != TR_ADDRECORD_SUCCESS){
         return addRecordSignal;
@@ -117,9 +121,30 @@ t2fs_file FS_createHandle(OpenRecord openRecord)
     }
 }
 
-t2fs_record* FS_findRecordInArray(DWORD dataPtr[], BYTE* block, DWORD* blockAddress, char* name, int count)
+Record* FS_findRecordInArray(DWORD dataPtr[], BYTE* block, DWORD* blockAddress, char* name, int count)
 {
-	return 0;
+    if (count <= 0 || name != NULL || dataPtr != NULL)
+        return NULL;
+    
+    //Iterates over data pointer, looking for the directory block that has the record of the file of name "name"
+    int i;
+	for (i = 0; i < count; i++){
+        //Read this block from the disc
+        if (!DAM_read(dataPtr[i], block, fileSystem.superBlock.BlockSize)){
+            
+            DirectoryBlock directoryBlock;
+            DB_DirectoryBlock(&directoryBlock, block);
+            //Try to find the target record  in this directory block
+            Record* foundRecord = DB_findByName(directoryBlock, name);
+            
+            if (foundRecord != NULL){
+                blockAddress = dataPtr[i];
+                return foundRecord;
+            }
+        }
+    }
+    //Did not find any record with this file name
+    return NULL;
 }
 
 int FS_findEmptyInArray(DWORD dataPtr[], BYTE* block, DWORD* blockAddress, int count)
