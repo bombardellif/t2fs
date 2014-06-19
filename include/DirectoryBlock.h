@@ -8,6 +8,6 @@ typedef struct s_DirectoryBlock{
 } DirectoryBlock;
 
 void DB_DirectoryBlock(DirectoryBlock* this, BYTE* block);
-Record* DB_findByName(DirectoryBlock* this, char* name);
+Record* DB_findByName(const DirectoryBlock* const this, const char* name);
 Record* DB_findEmpty(const DirectoryBlock* const this, const char* const notUsed);
 #endif

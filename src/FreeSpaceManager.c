@@ -12,6 +12,8 @@
 
 extern FileSystem fileSystem;
 
+static const char FULL_BITMAP_STR[] = {FSM_FULL_BITMAP_BYTE, '\0'};
+
 #define FSM_blockNumberInBitmapFile(add, blockSize) (add / (FSM_BITS_PER_BYTE * blockSize))
 #define FSM_byteOffsetInBlock(add, blockSize)       ((add / FSM_BITS_PER_BYTE) % blockSize)
 #define FSM_bitOffsetInByte(add)    (address % FSM_BITS_PER_BYTE)
@@ -26,12 +28,12 @@ int FSM_delete(DWORD address)
     unsigned short bitOffsetInByte = FSM_bitOffsetInByte(address);
     
     // Read the proper block from disc
-    if ((returnCode = TR_findBlockByNumber(&fileSystem.superBlock.BitMapReg, blockNumberInBitmapFile, &block, &blockAddress)) == 0) {
+    if ((returnCode = TR_findBlockByNumber(&fileSystem.superBlock.BitMapReg, blockNumberInBitmapFile, block, &blockAddress)) == 0) {
         
         // set to zero the correspondent bit of the bitmap for this address
         block[byteOffsetInBlock] &= ~(0x80 >> bitOffsetInByte);
 
-        returnCode = DAM_write(blockAddress, &block);
+        returnCode = DAM_write(blockAddress, block);
     }
     
     return returnCode;
@@ -43,7 +45,6 @@ int FSM_getFreeAddress(DWORD* address)
     BYTE block[fileSystem.superBlock.BlockSize + 1]; // allocate one more byte for a null-termination character
     int returnCode;
     unsigned int blockNumberInBitmapFile = 0;
-    char fullBitmapStrAux[2] = {FSM_FULL_BITMAP_BYTE, '\0'};
     
     // place a null after the block data, it is necessary to use the string function below
     block[fileSystem.superBlock.BlockSize] = '\0';
@@ -52,9 +53,9 @@ int FSM_getFreeAddress(DWORD* address)
     size_t fullBytesInBlock;
     while (!returnCode) {
         
-        if ((returnCode = TR_findBlockByNumber(&fileSystem.superBlock.BitMapReg, blockNumberInBitmapFile, &block, &blockAddress)) == 0) {
+        if ((returnCode = TR_findBlockByNumber(&fileSystem.superBlock.BitMapReg, blockNumberInBitmapFile, block, &blockAddress)) == 0) {
             
-            fullBytesInBlock = strspn(block, fullBitmapStrAux);
+            fullBytesInBlock = strspn((char*)block, FULL_BITMAP_STR);
             
             // if the number of full bytes is not equals to the size of the block,
             // then there is a free space here!
@@ -103,12 +104,12 @@ int FSM_markAsUsed(DWORD address)
     unsigned short bitOffsetInByte = FSM_bitOffsetInByte(address);
     
     // Read the proper block from disc
-    if ((returnCode = TR_findBlockByNumber(&fileSystem.superBlock.BitMapReg, blockNumberInBitmapFile, &block, &blockAddress)) == 0) {
+    if ((returnCode = TR_findBlockByNumber(&fileSystem.superBlock.BitMapReg, blockNumberInBitmapFile, block, &blockAddress)) == 0) {
         
         // set to 1 the correspondent bit of the bitmap for this address
         block[byteOffsetInBlock] |= 0x80 >> bitOffsetInByte;
 
-        returnCode = DAM_write(blockAddress, &block);
+        returnCode = DAM_write(blockAddress, block);
     }
     
     return returnCode;
