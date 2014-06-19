@@ -6,6 +6,7 @@
 
 #define IB_INVALID_ARGUMENT -1
 #define IB_CANT_ALLOCATE -2
+#define IB_IOERROR -3;
 #define IB_SUCCESS 0
 
 typedef struct s_IndirectionBlock{
