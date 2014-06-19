@@ -14,7 +14,7 @@
 #define FS_OPENRECORDS_MAXSIZE 20
 
 typedef struct s_FileSystem{
-	t2fs_superbloco superBlock;
+	SuperBlock superBlock;
 	OpenFile openFiles[FS_OPENFILES_MAXSIZE];
 	OpenRecord openRecords[FS_OPENRECORDS_MAXSIZE];
 	DWORD SUPERBLOCK_ADDRESS;

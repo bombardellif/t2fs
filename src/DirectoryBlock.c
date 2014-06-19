@@ -1,11 +1,24 @@
 #include "DirectoryBlock.h"
+#include "FileSystem.h"
 
+#include <malloc.h>
+
+extern FileSystem fileSystem;
 
 void DB_DirectoryBlock(DirectoryBlock* this, BYTE* block)
 {
+    this->entries = (Record*) block;
 }
 
-t2fs_record* DB_findByName(DirectoryBlock* this, char* name)
+
+Record* DB_findByName(DirectoryBlock* this, char* name)
 {
-	return 0;
+	unsigned int count = fileSystem.superBlock.BlockSize / sizeof(Record);
+    for (int i=0; i < count; i++) {
+        if (strcmp(this->entries[i].name, name) == 0) {
+            return & this->entries[i];
+        }
+    }
+    
+    return NULL;
 }
