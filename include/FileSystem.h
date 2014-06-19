@@ -5,6 +5,7 @@
 #include "OpenFile.h"
 #include "OpenRecord.h"
 #include "FilePath.h"
+#include "DirectoryBlock.h"
 
 #define FS_SUPERBLOCK_ADDRESS 0
 #define FS_NULL_BLOCK_POINTER 0xFFFFFFFF
@@ -27,7 +28,7 @@ typedef struct s_FileSystem{
 
 t2fs_file FS_create(FilePath* const filePath);
 t2fs_file FS_createHandle(OpenRecord openRecord);
-t2fs_record* FS_findRecordInArray(DWORD dataPtr[], BYTE* block, DWORD* blockAddress, char* name, int count);
+Record* FS_findRecordInArray(DWORD dataPtr[], BYTE* block, DWORD* blockAddress, Record*(*find)(DirectoryBlock*, char* param), char* name, int count);
 int FS_findEmptyInArray(DWORD dataPtr[], BYTE* block, DWORD* blockAddress, int count);
 int FS_delete(FilePath* const filePath);
 t2fs_file FS_open(FilePath* const filePath);

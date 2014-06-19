@@ -11,44 +11,20 @@ void TR_t2fs_record(Record* this, BYTE typeVal, char* name, DWORD blocksFileSize
 {
 }
 
-Record* TR_find(Record* this, FilePath* const filePath, OpenRecord* openRecord, BYTE* block, BYTE blockTrace[], DWORD* recordPointerTrace[], DWORD blockAddress[])
+Record* TR_find(Record* this, FilePath* const filePath, OpenRecord* openRecord, BYTE* block, Record*(*find)(const DirectoryBlock* const this, const char* const notUsed), BYTE blockTrace[], DWORD* recordPointerTrace[], DWORD blockAddress[])
 {
     if (this == NULL || openRecord == NULL || block == NULL)
         return NULL;
     
     char* currentNode = FP_getNextNode(filePath);
     
-    Record* foundRecord;
-    
-    //First try to find in the dataPtrs of this record
-    foundRecord = FS_findRecordInArray(this->dataPtr, block, openRecord->blockAddress, currentNode, TR_DATAPTRS_IN_RECORD);
-    
-    //If did not find, searches through Single Indirection Pointer (if not null)
-    if (foundRecord == NULL){
-        if (!DAM_read(this->singleIndPtr, block)){
-        
-            IndirectionBlock indirectionBlock;
-            IB_IndirectionBlock(&indirectionBlock, block);
-
-            foundRecord = IB_find(&indirectionBlock, currentNode, 1, block, blockAddress);
-        }
-    }
-    //If hasn't found yet, searches through Double Indirection Pointer (if not null)
-    if (foundRecord == NULL){
-        if (!DAM_read(this->doubleIndPtr, block)){
-        
-            IndirectionBlock indirectionBlock;
-            IB_IndirectionBlock(&indirectionBlock, block);
-
-            foundRecord = IB_find(&indirectionBlock, currentNode, 2, block, blockAddress);
-        }
-    }
+    Record* foundRecord = TR_findRecordInRecord(this, openRecord, block, find, currentNode);
     
     if (foundRecord != NULL){
         if (FP_hasNextNode(filePath)){
             /** @TODO Keep track */
             //Keep surfing in directory until find the target
-            return TR_find(foundRecord, filePath, openRecord, block, NULL, NULL, NULL);
+            return TR_find(foundRecord, filePath, openRecord, block, find, NULL, NULL, NULL);
         }else{
             //COPY found record into openRecord
             openRecord->record = *foundRecord;
@@ -58,6 +34,37 @@ Record* TR_find(Record* this, FilePath* const filePath, OpenRecord* openRecord, 
     }else{
         return NULL;
     }
+}
+
+Record* TR_findRecordInRecord(Record* this, OpenRecord* openRecord, BYTE* block, Record*(*find)(const DirectoryBlock* const this, const char* const notUsed), char* param)
+{
+    Record* foundRecord;
+    //First try to find in the dataPtrs of this record
+    foundRecord = FS_findRecordInArray(this->dataPtr, block, openRecord->blockAddress, find, param, TR_DATAPTRS_IN_RECORD);
+    
+    //If did not find, searches through Single Indirection Pointer (if not null)
+    if (foundRecord == NULL){
+        BYTE blockOfIndirection[fileSystem.superBlock.BlockSize];
+        if (!DAM_read(this->singleIndPtr, blockOfIndirection)){
+        
+            IndirectionBlock indirectionBlock;
+            IB_IndirectionBlock(&indirectionBlock, blockOfIndirection);
+
+            foundRecord = IB_find(&indirectionBlock, param, 1, block, &(openRecord->blockAddress), find);
+        }
+    }
+    //If hasn't found yet, searches through Double Indirection Pointer (if not null)
+    if (foundRecord == NULL){
+        BYTE blockOfIndirection[fileSystem.superBlock.BlockSize];
+        if (!DAM_read(this->doubleIndPtr, blockOfIndirection)){
+        
+            IndirectionBlock indirectionBlock;
+            IB_IndirectionBlock(&indirectionBlock, blockOfIndirection);
+
+            foundRecord = IB_find(&indirectionBlock, param, 2, block, &(openRecord->blockAddress), find);
+        }
+    }
+    return foundRecord;
 }
 
 int TR_addRecord(Record* this, Record newRecord, OpenRecord* newOpenRecord)
@@ -73,7 +80,7 @@ int TR_addRecord(Record* this, Record newRecord, OpenRecord* newOpenRecord)
     Record* targetRecord;
     assert (fileSystem.superBlock.BlockSize > 0);
     BYTE modifiedBlock[fileSystem.superBlock.BlockSize];
-    targetRecord = TR_find(this, filePath, newOpenRecord, &modifiedBlock, NULL, NULL, NULL);
+    targetRecord = TR_find(this, filePath, newOpenRecord, &modifiedBlock, DB_findByName, NULL, NULL, NULL);
     FP_destroy(&filePath);
     
     if (targetRecord != NULL){
@@ -82,7 +89,7 @@ int TR_addRecord(Record* this, Record newRecord, OpenRecord* newOpenRecord)
     }else{
         //Didn't find, then look for an empty entry in the directory
         assert(&modifiedBlock != NULL);
-        targetRecord = TR_findEmptyEntry(this, newOpenRecord, &modifiedBlock);
+        targetRecord = TR_findRecordInRecord(this, newOpenRecord, &modifiedBlock, DB_findEmpty, NULL);
         
         //If did not find an empty entry, then create one
         if (targetRecord == NULL){

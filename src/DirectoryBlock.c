@@ -13,9 +13,23 @@ void DB_DirectoryBlock(DirectoryBlock* this, BYTE* block)
 
 Record* DB_findByName(DirectoryBlock* this, char* name)
 {
+    if (this == NULL || name == NULL)
+        return NULL;
 	unsigned int count = fileSystem.superBlock.BlockSize / sizeof(Record);
     for (int i=0; i < count; i++) {
         if (strcmp(this->entries[i].name, name) == 0) {
+            return & this->entries[i];
+        }
+    }
+    
+    return NULL;
+}
+
+Record* DB_findEmpty(const DirectoryBlock* const this, const char* const notUsed)
+{
+	unsigned int count = fileSystem.superBlock.BlockSize / sizeof(Record);
+    for (int i=0; i < count; i++) {
+        if (this->entries[i].TypeVal == TYPEVAL_INVALIDO) {
             return & this->entries[i];
         }
     }

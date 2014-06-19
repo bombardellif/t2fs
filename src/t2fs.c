@@ -1,18 +1,18 @@
 #include "t2fs.h"
+#include "FilePath.h"
+#include "FileSystem.h"
 #include <stdlib.h>
 
 t2fs_file t2fs_create (char *nome){
     FilePath filePath;
     FP_FilePath(&filePath, nome);
     
-    t2fs_file returnValue;
+    t2fs_file returnValue = FS_create(&filePath);    
+    FP_destroy(&filePath);
     
-    if (filePath != NULL){
-        returnValue = FS_create(filePath);
-    }else{
+    if(returnValue < 0){
         returnValue = CREATE_INVALID_FILENAME;
     }
     
-    FP_destroy(&filePath);
     return returnValue;
 }

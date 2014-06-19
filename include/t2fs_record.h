@@ -14,10 +14,10 @@
 #define T2FS_NULL_BLOCK_POINTER 0xFFFFFFFF
 
 void TR_t2fs_record(Record* this, BYTE typeVal, char* name, DWORD blocksFileSize, DWORD bytesFileSize);
-Record* TR_find(Record* this, FilePath* const filePath, OpenRecord* openRecord, BYTE* block, BYTE blockTrace[], DWORD* recordPointerTrace[], DWORD blockAddress[]);
+Record* TR_find(Record* this, FilePath* const filePath, OpenRecord* openRecord, BYTE* block, Record*(*find)(const DirectoryBlock* const this, const char* const notUsed), BYTE blockTrace[], DWORD* recordPointerTrace[], DWORD blockAddress[]);
+Record* TR_findRecordInRecord(Record* this, OpenRecord* openRecord, BYTE* block, Record*(*find)(const DirectoryBlock* const this, const char* const notUsed), char* param);
 int TR_addRecord(Record* this, Record newRecord, OpenRecord* newOpenRecord);
 void TR_freeBlocks(Record* this);
-Record* TR_findEmptyEntry(Record* this, OpenRecord* openRecord, BYTE* block);
 int TR_allocateNewDirectoryBlock(Record* this, BYTE* block, DWORD* blockAddress);
 int TR_findBlockByNumber(Record* this, DWORD number, BYTE* block, DWORD* blockAddress);
 

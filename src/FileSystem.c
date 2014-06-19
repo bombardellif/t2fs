@@ -1,4 +1,6 @@
 #include "FileSystem.h"
+#include "t2fs_record.h"
+#include "DiscAccessManager.h"
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
@@ -14,54 +16,58 @@ t2fs_file FS_create(FilePath* const filePath)
 	FilePath dirPath;
     FP_withoutLastNode(filePath, &dirPath);
     //Record of the parent who will get new child
-    assert fileSystem.superBlock.BlockSize > 0;
+    assert(fileSystem.superBlock.BlockSize > 0);
     OpenRecord parentOpenRecord;
     BYTE parentBlock[fileSystem.superBlock.BlockSize];
     
     //Find parent, starting from the root
-    Record* parentRecord = TR_find(fileSystem.superBlock.RootDirReg, &dirPath, &parentOpenRecord, parentBlock, NULL, NULL, NULL);
+    Record* parentRecord = TR_find(&fileSystem.superBlock.RootDirReg, &dirPath, &parentOpenRecord, parentBlock, DB_findByName, NULL, NULL, NULL);
     FP_destroy(&dirPath);
     
-    Record newRecord;
-    TR_t2fs_record(&newRecord, TYPEVAL_REGULAR, FP_getLastNode(filePath), 0, 0);
-    
-    OpenRecord newOpenRecord;
-    int addRecordSignal = TR_addRecord(parentRecord, newRecord, &newOpenRecord);
-    //Update open record too
-    parentOpenRecord.record = parentRecord;
-    
-    int writingSignal;
-    if (addRecordSignal == TR_RECORD_MODIFIED){
-        //If modified a directory and it is not the root directory
-        if (parentBlock != NULL){
-            writingSignal = DAM_write(parentOpenRecord.blockAddress, parentBlock, fileSystem.superBlock.BlockSize);
-        }else{
-            //If modified the root directory then save it. Actually save the superblock that has the root directory
-            //Supose SuperBlock doesn't have alligment paddings, i.e., sizeof(SuperBlock) <= SuperBlock.SuperBlockSize
-            writingSignal = DAM_write(FS_SUPERBLOCK_ADDRESS, fileSystem.superBlock, sizeof(SuperBlock));
+    if (parentRecord != NULL){
+        Record newRecord;
+        TR_t2fs_record(&newRecord, TYPEVAL_REGULAR, FP_getLastNode(filePath), 0, 0);
+
+        OpenRecord newOpenRecord;
+        int addRecordSignal = TR_addRecord(parentRecord, newRecord, &newOpenRecord);
+        //Update open record too
+        parentOpenRecord.record = *parentRecord;
+
+        int writingSignal;
+        if (addRecordSignal == TR_RECORD_MODIFIED){
+            //If modified a directory and it is not the root directory
+            if (parentBlock != NULL){
+                writingSignal = DAM_write(parentOpenRecord.blockAddress, parentBlock);
+            }else{
+                //If modified the root directory then save it. Actually save the superblock that has the root directory
+                //Supose SuperBlock doesn't have alligment paddings, i.e., sizeof(SuperBlock) <= SuperBlock.SuperBlockSize
+                writingSignal = DAM_write(FS_SUPERBLOCK_ADDRESS, &fileSystem.superBlock);
+            }
+            if (writingSignal != 0){
+                addRecordSignal = TR_ADDRECORD_FAIL;
+            }
         }
-        if (writingSignal != 0){
-            addRecordSignal = TR_ADDRECORD_FAIL;
-        }
-    }
-    if(addRecordSignal == TR_ADDRECORD_SUCCESS || addRecordSignal == TR_RECORD_MODIFIED){
-        t2fs_file newHandle = FS_createHandle(newOpenRecord);
-        if (newHandle < 0){
-            return FS_CREATESUCCESS_BUT_OPENPROBLEM;
+        if(addRecordSignal == TR_ADDRECORD_SUCCESS || addRecordSignal == TR_RECORD_MODIFIED){
+            t2fs_file newHandle = FS_createHandle(newOpenRecord);
+            if (newHandle < 0){
+                return FS_CREATESUCCESS_BUT_OPENPROBLEM;
+            }else{
+                return newHandle;
+            }
         }else{
-            return newHandle;
+            //ERROR
+            return FS_CREATE_FAIL;
         }
     }else{
-        //ERROR
-        return FS_CREATE_FAIL;
+        return FS_CREATEPROBLEM_INVALID_PATH;
     }
 }
 
 t2fs_file FS_createHandle(OpenRecord openRecord)
 {
-    assert openRecord.record.TypeVal != TYPEVAL_INVALIDO;
-    assert openRecord.record.name != NULL;
-    assert openRecord.blockAddress != 0;
+    assert(openRecord.record.TypeVal != TYPEVAL_INVALIDO);
+    assert(openRecord.record.name != NULL);
+    assert(openRecord.blockAddress != 0);
     
     //Verify if there is place in fileSytem open records and if this record is already open
     int i;
@@ -69,7 +75,7 @@ t2fs_file FS_createHandle(OpenRecord openRecord)
     int possiblePlaceRecords = -1;
     for (i = 0; i < FS_OPENRECORDS_MAXSIZE; i++){
         if (fileSystem.openRecords[i].record.TypeVal != TYPEVAL_INVALIDO){
-            if (OR_equals(fileSystem.openRecords[i], openRecord)){
+            if (OR_equals(&fileSystem.openRecords[i], openRecord)){
                 alreadyOpen = TRUE;
                 possiblePlaceRecords = i;
                 break;
@@ -89,10 +95,10 @@ t2fs_file FS_createHandle(OpenRecord openRecord)
     }
     
     if (alreadyOpen){
-        assert possiblePlaceRecords >= 0;
+        assert(possiblePlaceRecords >= 0);
         if (possiblePlaceFiles >= 0){
             //New openfile will point this record
-            assert fileSystem.openRecords[possiblePlaceRecords].count > 0;
+            assert(fileSystem.openRecords[possiblePlaceRecords].count > 0);
             fileSystem.openRecords[possiblePlaceRecords].count++;
 
             OpenFile newOpenFile;
@@ -126,7 +132,7 @@ t2fs_file FS_createHandle(OpenRecord openRecord)
     }
 }
 
-Record* FS_findRecordInArray(DWORD dataPtr[], BYTE* block, DWORD* blockAddress, char* name, int count)
+Record* FS_findRecordInArray(DWORD dataPtr[], BYTE* block, DWORD* blockAddress, Record*(*find)(DirectoryBlock*, char* param), char* name, int count)
 {
     if (count <= 0 || name != NULL || dataPtr != NULL)
         return NULL;
@@ -140,10 +146,10 @@ Record* FS_findRecordInArray(DWORD dataPtr[], BYTE* block, DWORD* blockAddress, 
             DirectoryBlock directoryBlock;
             DB_DirectoryBlock(&directoryBlock, block);
             //Try to find the target record  in this directory block
-            Record* foundRecord = DB_findByName(directoryBlock, name);
+            Record* foundRecord = find(&directoryBlock, name);
             
             if (foundRecord != NULL){
-                blockAddress = dataPtr[i];
+                *blockAddress = dataPtr[i];
                 return foundRecord;
             }
         }
