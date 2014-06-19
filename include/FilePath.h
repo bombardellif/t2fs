@@ -8,6 +8,7 @@
 typedef struct s_FilePath {
 	char* path;
     char* pathWithoutLastNode;
+    char* pathLastNode;
     BOOL parsed;
     char* currentToken;
     BOOL tokenWasRetrieved;

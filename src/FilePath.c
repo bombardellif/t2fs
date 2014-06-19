@@ -25,19 +25,25 @@ void FP_FilePath(FilePath* this, char* path)
             this->path[pathLen-1] = '\0';
         }
 
-        // Set the path wothout last node:
+        // Set the path without last node:
         char* lastDelim = strrchr(this->path, DS);
         if (lastDelim) {
             int pathUntilDelimSize = lastDelim - this->path + 1;
             this->pathWithoutLastNode = (char*) calloc(pathUntilDelimSize, sizeof(char));
+            this->pathLastNode = (char*) calloc(pathLen - pathUntilDelimSize, sizeof(char));
 
             // copy from path to pathWithoutLastNode until the last delimiter
             *lastDelim = '\0';
             strcpy(this->pathWithoutLastNode, this->path);
             *lastDelim = DS;
+            
+            // copy from path to pathLastNode since the last delimiter until the end
+            strcpy(this->pathLastNode, lastDelim);
         } else {
             this->pathWithoutLastNode = NULL;
+            this->pathLastNode = NULL;
         }
+        
     }
 }
 
@@ -52,6 +58,10 @@ void FP_destroy(FilePath* this)
             free(this->pathWithoutLastNode);
             this->pathWithoutLastNode = NULL;
         }
+        if (this->pathLastNode) {
+            free(this->pathLastNode);
+            this->pathLastNode = NULL;
+        }
     }
 }
 
@@ -59,6 +69,11 @@ void FP_withoutLastNode(FilePath* this, FilePath* new)
 {
     // Create new File Path without the last node of this File Path
 	FP_FilePath(new, this->pathWithoutLastNode);
+}
+
+char* FP_getLastNode(FilePath* this)
+{
+    return this->pathLastNode;
 }
 
 static char* FP__nextNode(FilePath* this)
