@@ -53,19 +53,45 @@ int IB_allocateNewDirectoryBlock(IndirectionBlock* this, int level, BYTE* block,
 	if (this == NULL)
         return IB_INVALID_ARGUMENT;
     
-    int writtenPos = TR_findEmptyPositionInArray(this->dataPtr, fileSystem.superBlock.BlockSize / sizeof(DWORD));
+    if (level == 2){
+        int writtenPos = TR_findEmptyPositionInArray(this->dataPtr, fileSystem.superBlock.BlockSize / sizeof(DWORD));
+        
+        if (writtenPos >= 0){
+            //Create new indirection block (child), which will be updated in fact
+            DWORD childIndirectionBlockAddress;
+            BYTE childIndirectionBlockMem[fileSystem.superBlock.BlockSize];
+            if (TR_allocateNewIndirectionBlock(childIndirectionBlockMem, &childIndirectionBlockAddress) == TR_ADDRECORD_SUCCESS){
+            
+                //Allocate New Block, pointed by the new indirection block
+                if (TR_allocateNewBlock(blockAddress)){
+                    //Initialize block with null pointers
+                    memset(block, FS_NULL_BLOCK_POINTER, fileSystem.superBlock.BlockSize);
+                    //Saves new block to disc
+                    if (DAM_write(*blockAddress, block) != 0){
+                        return IB_IOERROR;
+                    }
 
-    if (writtenPos >= 0){
-        if (TR_allocateNewBlock(blockAddress) == TR_ADDRECORD_SUCCESS){
-            //Initialize block with null pointers
-            memset(block, FS_NULL_BLOCK_POINTER, fileSystem.superBlock.BlockSize);
-            //updates data pointer with new block address
-            this->dataPtr[writtenPos] = *blockAddress;
-            //@TODO save
-            return IB_SUCCESS;
+                    IndirectionBlock childIndirectionBlock;
+                    IB_IndirectionBlock(&childIndirectionBlock, childIndirectionBlockMem);
+                    //The first position of the new ind block will be updated with the new block address
+                    childIndirectionBlock.dataPtr[0] = *blockAddress;
+
+                    //updates data pointer of doubleindptr with new indirection block address
+                    this->dataPtr[writtenPos] = childIndirectionBlockAddress;
+                    
+                    return IB_SUCCESS;
+                }else{
+                    return IB_CANT_ALLOCATE;
+                }
+            }else{
+                return IB_CANT_ALLOCATE;
+            }
         }else{
             return IB_CANT_ALLOCATE;
-        }
+        }        
+    }else{
+        //Not implemented yet
+        return IB_INVALID_ARGUMENT;
     }
 }
 
