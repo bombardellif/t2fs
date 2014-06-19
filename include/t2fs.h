@@ -20,6 +20,7 @@ typedef int t2fs_file;
 #define TR_FILENAME_MAXSIZE 39
 #define TR_RECORD_MODIFIED 99
 #define TR_ADDRECORD_SUCCESS 99
+#define TR_ADDRECORD_FAIL 99
 #define TR_DATAPTRS_IN_RECORD 2
 
 

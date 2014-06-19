@@ -5,7 +5,7 @@
 
 FileSystem fileSystem;
 
-t2fs_file FS_create(FilePath* filePath)
+t2fs_file FS_create(FilePath* const filePath)
 {
     if (filePath == NULL){
         return FS_CREATEPROBLEM_INVALID_PATH;
@@ -19,14 +19,14 @@ t2fs_file FS_create(FilePath* filePath)
     BYTE parentBlock[fileSystem.superBlock.BlockSize];
     
     //Find parent, starting from the root
-    Record* parentRecord = TR_find(fileSystem.superBlock.RootDirReg, dirPath, &parentOpenRecord, parentBlock, NULL, NULL, NULL);
+    Record* parentRecord = TR_find(fileSystem.superBlock.RootDirReg, &dirPath, &parentOpenRecord, parentBlock, NULL, NULL, NULL);
     FP_destroy(&dirPath);
     
     Record newRecord;
     TR_t2fs_record(&newRecord, TYPEVAL_REGULAR, FP_getLastNode(filePath), 0, 0);
     
     OpenRecord newOpenRecord;
-    int addRecordSignal = TR_addRecord(parentRecord, newRecord, newOpenRecord);
+    int addRecordSignal = TR_addRecord(parentRecord, newRecord, &newOpenRecord);
     //Update open record too
     parentOpenRecord.record = parentRecord;
     
@@ -40,15 +40,20 @@ t2fs_file FS_create(FilePath* filePath)
             //Supose SuperBlock doesn't have alligment paddings, i.e., sizeof(SuperBlock) <= SuperBlock.SuperBlockSize
             writingSignal = DAM_write(FS_SUPERBLOCK_ADDRESS, fileSystem.superBlock, sizeof(SuperBlock));
         }
-    }else if(addRecordSignal != TR_ADDRECORD_SUCCESS){
-        return addRecordSignal;
+        if (writingSignal != 0){
+            addRecordSignal = TR_ADDRECORD_FAIL;
+        }
     }
-    
-    t2fs_file newHandle = FS_createHandle(filePath, newOpenRecord);
-    if (newHandle < 0){
-        return FS_CREATESUCCESS_BUT_OPENPROBLEM;
+    if(addRecordSignal == TR_ADDRECORD_SUCCESS || addRecordSignal == TR_RECORD_MODIFIED){
+        t2fs_file newHandle = FS_createHandle(newOpenRecord);
+        if (newHandle < 0){
+            return FS_CREATESUCCESS_BUT_OPENPROBLEM;
+        }else{
+            return newHandle;
+        }
     }else{
-        return newHandle;
+        //ERROR
+        return FS_CREATE_FAIL;
     }
 }
 
@@ -130,7 +135,7 @@ Record* FS_findRecordInArray(DWORD dataPtr[], BYTE* block, DWORD* blockAddress, 
     int i;
 	for (i = 0; i < count; i++){
         //Read this block from the disc
-        if (!DAM_read(dataPtr[i], block, fileSystem.superBlock.BlockSize)){
+        if (!DAM_read(dataPtr[i], block)){
             
             DirectoryBlock directoryBlock;
             DB_DirectoryBlock(&directoryBlock, block);
@@ -142,6 +147,7 @@ Record* FS_findRecordInArray(DWORD dataPtr[], BYTE* block, DWORD* blockAddress, 
                 return foundRecord;
             }
         }
+        //else do nothing, just keep trying
     }
     //Did not find any record with this file name
     return NULL;
@@ -152,12 +158,12 @@ int FS_findEmptyInArray(DWORD dataPtr[], BYTE* block, DWORD* blockAddress, int c
 	return 0;
 }
 
-int FS_delete(FilePath* filePath)
+int FS_delete(FilePath* const filePath)
 {
 	return 0;
 }
 
-t2fs_file FS_open(FilePath* filePath)
+t2fs_file FS_open(FilePath* const filePath)
 {
 	return 0;
 }
