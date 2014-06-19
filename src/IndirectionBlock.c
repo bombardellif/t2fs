@@ -4,6 +4,7 @@
 
 void IB_IndirectionBlock(IndirectionBlock* this, BYTE* block)
 {
+    this->dataPtr = (DWORD*) block;
 }
 
 Record* IB_find(IndirectionBlock* this, char* name, int level, BYTE* block, DWORD* blockAddress)
@@ -40,4 +41,31 @@ Record* IB_find(IndirectionBlock* this, char* name, int level, BYTE* block, DWOR
 int IB_allocateNewDirectoryBlock(IndirectionBlock* this, int level, BYTE* block, DWORD* blockAddress)
 {
 	return 0;
+}
+
+int IB_findBlockByNumber(IndirectionBlock* this, int level, DWORD number, BYTE* block, DWORD* blockAddress)
+{
+    int returnCode;
+    if (level == 1) {
+        
+        *blockAddress = this->dataPtr[number];
+        returnCode = DAM_read(this->dataPtr[number], block);
+    } else if (level == 2) {
+        
+        unsigned int numOfPointersInBlock = fileSystem.superBlock.BlockSize / sizeof(DWORD);
+        unsigned int numOfPointersInIndirectionBlock = numOfPointersInBlock * numOfPointersInBlock;
+        unsigned int singleIndPointerNumber = number / numOfPointersInIndirectionBlock;
+        unsigned int numberInIndirectionPointer = number % numOfPointersInIndirectionBlock;
+        
+        // Read the single indirection block
+        if ((returnCode = DAM_read(this->dataPtr[singleIndPointerNumber], block)) == 0) {
+
+            IndirectionBlock* indirectionBlock;
+            IB_IndirectionBlock(indirectionBlock, block);
+            // find in the indirection block the required block
+            returnCode = IB_findBlockByNumber(indirectionBlock, 1, numberInIndirectionPointer, block, blockAddress);
+        }
+    }
+    
+    return returnCode;
 }

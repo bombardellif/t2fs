@@ -14,6 +14,6 @@ int TR_addRecord(Record* this, t2fs_record newRecord, OpenRecord* newOpenRecord)
 void TR_freeBlocks(Record* this);
 Record* TR_findEmptyEntry(Record* this, OpenRecord* openRecord, BYTE* block);
 void TR_allocateNewDirectoryBlock(Record* this, BYTE* block, DWORD* blockAddress);
-
+int TR_findBlockByNumber(Record* this, DWORD number, BYTE* block, DWORD* blockAddress);
 
 #endif

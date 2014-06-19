@@ -30,9 +30,9 @@ void FP_FilePath(FilePath* this, char* path)
             this->pathWithoutLastNode = (char*) calloc(pathUntilDelimSize, sizeof(char));
 
             // copy from path to pathWithoutLastNode until the last delimiter
-            lastDelim* = '\0';
+            *lastDelim = '\0';
             strcpy(this->pathWithoutLastNode, this->path);
-            lastDelim* = DS;
+            *lastDelim = DS;
         } else {
             this->pathWithoutLastNode = NULL;
         }

@@ -1,4 +1,7 @@
 #include "t2fs_record.h"
+#include "DiscAccessManager.h"
+#include "FileSystem.h"
+#include "IndirectionBlock.h"
 #include <stdlib.h>
 
 extern FileSystem fileSystem;
@@ -70,4 +73,60 @@ Record* TR_findEmptyEntry(Record* this, OpenRecord* openRecord, BYTE* block)
 
 void TR_allocateNewDirectoryBlock(Record* this, BYTE* block, DWORD* blockAddress)
 {
+}
+
+/**
+ * Finds and read from disc the block which number in the record is the parameter
+ * "number". The first block in the record is the 0, the second is the 1, and so on.
+ * 
+ * @param this
+ * @param number    number of the the block in this record to load
+ * @param block     the pointer to the area of memory where to load the block data
+ * @param blockAddress output variable, the address of the loaded block
+ * @return  0 in case of success, a number different of zero in case of error
+ */
+int TR_findBlockByNumber(Record* this, DWORD number, BYTE* block, DWORD* blockAddress)
+{
+    if (this == NULL || block == NULL)
+        return NULL;
+    
+    int returnCode;
+    unsigned int numOfPointersInBlock = fileSystem.superBlock.BlockSize / sizeof(DWORD);
+    unsigned int numOfPointersInIndirectionBlock = numOfPointersInBlock * numOfPointersInBlock;
+    
+    // if the block is in the direct pointers
+    if (number < TR_DATAPTRS_IN_RECORD) {
+        
+        *blockAddress = this->dataPtr[number];
+        // Read the desired block
+        returnCode =  DAM_read(this->dataPtr[number], block);
+    }
+    // subtract the number of dataPtr in the record from the "number" and check
+    // if the block is in the first indirection pointer
+    else if ((number -= TR_DATAPTRS_IN_RECORD) < numOfPointersInBlock) {
+        
+        // Read the single indirection block
+        if ((returnCode = DAM_read(this->singleIndPtr, block)) == 0) {
+
+            IndirectionBlock* indirectionBlock;
+            IB_IndirectionBlock(indirectionBlock, block);
+            // find in the indirection block the required block
+            returnCode = IB_findBlockByNumber(indirectionBlock, 1, number, block, blockAddress);
+        }
+    }
+    // subtract the number of dataPtr in the double indirection pointer from the
+    // "number" and check if the block is in the second indirection pointer
+    else if ((number -= numOfPointersInBlock) < numOfPointersInIndirectionBlock) {
+        
+        // Read the double indirection block
+        if ((returnCode = DAM_read(this->doubleIndPtr, block)) == 0) {
+
+            IndirectionBlock* indirectionBlock;
+            IB_IndirectionBlock(indirectionBlock, block);
+            // find in the indirection block the required block
+            returnCode = IB_findBlockByNumber(indirectionBlock, 2, number, block, blockAddress);
+        }
+    }
+    
+    return returnCode;
 }
