@@ -124,8 +124,50 @@ int TR_addRecord(Record* this, Record newRecord, OpenRecord* newOpenRecord)
     }
 }
 
-void TR_freeBlocks(Record* this)
+int TR_freeBlocks(Record* this)
 {
+    if (this == NULL || this->TypeVal != TYPEVAL_REGULAR)
+        return T2FS_ADDRECORD_INVALID_ARGUMENT;
+    
+    BYTE block;
+    int returnCode;
+    
+    // direct blocks
+    for (int i=0; i<TR_DATAPTRS_IN_RECORD; i++) {
+        if (this->dataPtr[i] != FS_NULL_BLOCK_POINTER) {
+            
+            if ((returnCode = FSM_delete(this->dataPtr[i])) != 0) {
+                break;
+            }
+            this->dataPtr[i] = FS_NULL_BLOCK_POINTER;
+        }
+    }
+    // 1 level blocks
+    if ((returnCode == 0) && (this->singleIndPtr != FS_NULL_BLOCK_POINTER)) {
+        // Read the single indirection block
+        if ((returnCode = DAM_read(this->singleIndPtr, &block)) == 0) {
+
+            IndirectionBlock indirectionBlock;
+            IB_IndirectionBlock(&indirectionBlock, &block);
+            
+            returnCode = IB_freeBlocks(&indirectionBlock, 1);
+        }
+        this->singleIndPtr = FS_NULL_BLOCK_POINTER;
+    }
+    // 2 level blocks
+    if ((returnCode == 0) && (this->doubleIndPtr != FS_NULL_BLOCK_POINTER)) {
+        // Read the double indirection block
+        if ((returnCode = DAM_read(this->doubleIndPtr, &block)) == 0) {
+
+            IndirectionBlock indirectionBlock;
+            IB_IndirectionBlock(&indirectionBlock, &block);
+            
+            returnCode = IB_freeBlocks(&indirectionBlock, 2);
+        }
+        this->doubleIndPtr = FS_NULL_BLOCK_POINTER;
+    }
+    
+    return returnCode;
 }
 
 int TR_allocateNewDirectoryBlock(Record* this, BYTE* block, DWORD* blockAddress)
@@ -315,7 +357,7 @@ int TR_findEmptyPositionInArray(const DWORD const dataPtr[], const unsigned int 
 int TR_findBlockByNumber(Record* this, DWORD number, BYTE* block, DWORD* blockAddress)
 {
     if (this == NULL || block == NULL)
-        return NULL;
+        return T2FS_ADDRECORD_INVALID_ARGUMENT;
     
     int returnCode;
     unsigned int numOfPointersInBlock = fileSystem.superBlock.BlockSize / sizeof(DWORD);
@@ -335,10 +377,10 @@ int TR_findBlockByNumber(Record* this, DWORD number, BYTE* block, DWORD* blockAd
         // Read the single indirection block
         if ((returnCode = DAM_read(this->singleIndPtr, block)) == 0) {
 
-            IndirectionBlock* indirectionBlock;
-            IB_IndirectionBlock(indirectionBlock, block);
+            IndirectionBlock indirectionBlock;
+            IB_IndirectionBlock(&indirectionBlock, block);
             // find in the indirection block the required block
-            returnCode = IB_findBlockByNumber(indirectionBlock, 1, number, block, blockAddress);
+            returnCode = IB_findBlockByNumber(&indirectionBlock, 1, number, block, blockAddress);
         }
     }
     // subtract the number of dataPtr in the double indirection pointer from the
@@ -348,10 +390,10 @@ int TR_findBlockByNumber(Record* this, DWORD number, BYTE* block, DWORD* blockAd
         // Read the double indirection block
         if ((returnCode = DAM_read(this->doubleIndPtr, block)) == 0) {
 
-            IndirectionBlock* indirectionBlock;
-            IB_IndirectionBlock(indirectionBlock, block);
+            IndirectionBlock indirectionBlock;
+            IB_IndirectionBlock(&indirectionBlock, block);
             // find in the indirection block the required block
-            returnCode = IB_findBlockByNumber(indirectionBlock, 2, number, block, blockAddress);
+            returnCode = IB_findBlockByNumber(&indirectionBlock, 2, number, block, blockAddress);
         }
     }
     

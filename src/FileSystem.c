@@ -1,11 +1,16 @@
 #include "FileSystem.h"
 #include "t2fs_record.h"
 #include "DiscAccessManager.h"
+#include "FreeSpaceManager.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 
 FileSystem fileSystem;
+
+#define numOfPointersInBlock(blockSize)     (blockSize / sizeof(DWORD))
+#define numOfEntriesInBlock(blockSize)      (blockSize / sizeof(Record))
 
 t2fs_file FS_create(FilePath* const filePath)
 {
@@ -166,7 +171,104 @@ int FS_findEmptyInArray(DWORD dataPtr[], BYTE* block, DWORD* blockAddress, int c
 
 int FS_delete(FilePath* const filePath)
 {
-	return 0;
+	if (filePath == NULL){
+        return FS_CREATEPROBLEM_INVALID_PATH;
+    }
+    
+    int returnCode;
+    OpenRecord targetOpenRecord;
+    BYTE targetBlock[fileSystem.superBlock.BlockSize];
+    BYTE blockTrace[FS_MAX_TRACE_DEPTH][fileSystem.superBlock.BlockSize];
+    DWORD* recordPointerTrace[FS_MAX_TRACE_DEPTH];
+    DWORD blockAddressTrace[FS_MAX_TRACE_DEPTH];
+    
+    //Find parent, starting from the root
+    Record* targetRecord = TR_find(&fileSystem.superBlock.RootDirReg, &filePath, &targetOpenRecord, targetBlock, DB_findByName, blockTrace, recordPointerTrace, blockAddressTrace);
+    
+    // Check for errors from TR_find
+    
+    // if it is a directory, it must be empty
+    if ((targetRecord->TypeVal == TYPEVAL_DIRETORIO)) {
+        
+        for (int i=0; i<TR_DATAPTRS_IN_RECORD ; i++) {
+            if (targetRecord->dataPtr[i] != FS_NULL_BLOCK_POINTER) {
+                returnCode = FS_DELETEPROBLEM_DIRECTORY_NOT_EMPTY;
+                break;
+            }
+        }
+        
+        if ((returnCode == 0)
+        && ((targetRecord->singleIndPtr != FS_NULL_BLOCK_POINTER)
+            || (targetRecord->doubleIndPtr != FS_NULL_BLOCK_POINTER))
+        ) {
+            returnCode = FS_DELETEPROBLEM_DIRECTORY_NOT_EMPTY;
+        }
+        
+    } else {
+    // if it is a regular file, free its blocks
+        returnCode = TR_freeBlocks(targetRecord);
+    }
+    
+    // if not a problem yet ...
+    if (returnCode == 0) {
+        targetRecord->TypeVal = TYPEVAL_INVALIDO;
+        
+        unsigned int numOfEntriesInBlock = numOfEntriesInBlock(fileSystem.superBlock.BlockSize);
+        unsigned int numOfPointersInBlock = numOfPointersInBlock(fileSystem.superBlock.BlockSize);
+        
+        // chech if the block where is this directory entry is now empty
+        DirectoryBlock dirBlock;
+        DB_DirectoryBlock(&dirBlock, targetBlock);
+        int i;
+        for (i=0; i<numOfEntriesInBlock; i++) {
+            if (dirBlock.entries[i].TypeVal != TYPEVAL_INVALIDO) {
+                break;
+            }
+        }
+        
+        // if it every entry is empty, then free this block,
+        // else, just save this block
+        if (i == numOfEntriesInBlock) {
+            if ((returnCode = FSM_delete(targetOpenRecord.blockAddress)) == 0) {
+            
+                // for each block since the entry of the directory in which this file is in,
+                // check if removing this entry will free any block, if so do it
+                for (i=FS_MAX_TRACE_DEPTH; i>=0; i--) {
+                    *recordPointerTrace[i] = FS_NULL_BLOCK_POINTER;
+                    
+                    if (i != 0) {
+                        
+                        int j;
+                        for (j=0; j<numOfPointersInBlock; j++) {
+                            if (blockTrace[i][j] != FS_NULL_BLOCK_POINTER) {
+                                break;
+                            }
+                        }
+                        // if every pointer in this block is empty, then free it
+                        // else break this loop, because there won't be any other to free
+                        if (j == numOfPointersInBlock) {
+                            if ((returnCode = FSM_delete(blockAddressTrace[i])) != 0) {
+                                break;
+                            }
+                        } else {
+                            break;
+                        }
+                    }
+                }
+                
+                // if no error happened, then save the modified block (may be the superblock as well)
+                if (returnCode == 0) {
+                    
+                    returnCode = DAM_write(blockAddressTrace[i], blockTrace[i]);
+                }
+            }
+        } else {
+            
+            returnCode = DAM_write(targetOpenRecord.blockAddress, targetBlock);
+        }
+    }
+    
+    return returnCode;
 }
 
 t2fs_file FS_open(FilePath* const filePath)
