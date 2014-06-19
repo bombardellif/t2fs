@@ -10,5 +10,6 @@ typedef struct s_OpenRecord{
 } OpenRecord;
 
 void OR_incCount(OpenRecord* this);
+void OR_equals(OpenRecord* this, OpenRecord other);
 
 #endif

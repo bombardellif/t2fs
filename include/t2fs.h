@@ -16,6 +16,12 @@ typedef int t2fs_file;
 #define TYPEVAL_DIRETORIO   0x02
 #define TYPEVAL_INVALIDO    0xFF    // qualquer outro valor também é invalido
 
+#define CREATE_INVALID_FILENAME 99
+#define TR_FILENAME_MAXSIZE 39
+#define TR_RECORD_MODIFIED 99
+#define TR_ADDRECORD_SUCCESS 99
+
+
 /** Registro de diretório (entrada de diretório) */
 struct t2fs_record {
     /* Tipo da entrada. Indica se o registro é válido e, se for, o tipo do arquivo (regular ou diretório).
@@ -53,6 +59,9 @@ struct t2fs_record {
 
 } __attribute__((packed));
 
+/** Type definition of Record */
+typedef struct t2fs_record Record;
+
 /** Superbloco */
 struct t2fs_superbloco {
     /* Identificação do sistema de arquivo. É formado pelas letras T2FS. */
@@ -83,6 +92,9 @@ struct t2fs_superbloco {
     struct t2fs_record RootDirReg; // :  64 bytes
 
 } __attribute__((packed));
+
+/** Type definition of Record */
+typedef struct t2fs_superbloco SuperBlock;
 
 /** Retorna a identificação dos implementadores do T2FS. */
 char *t2fs_identify (void);
