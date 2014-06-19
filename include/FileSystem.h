@@ -11,6 +11,7 @@
 
 #define FS_CREATESUCCESS_BUT_OPENPROBLEM 99
 #define FS_CREATEPROBLEM_INVALID_PATH 99
+#define FS_CREATE_FAIL 99
 #define FS_OPENPROBLEM_FILEPOINTER_SPACE_UNAVAILABLE 99
 #define FS_OPENPROBLEM_RECORDPOINTER_SPACE_UNAVAILABLE 99
 
@@ -24,10 +25,10 @@ typedef struct s_FileSystem{
 	DWORD SUPERBLOCK_ADDRESS;
 } FileSystem;
 
-t2fs_file FS_create(FilePath* filePath);
+t2fs_file FS_create(FilePath* const filePath);
 t2fs_file FS_createHandle(OpenRecord openRecord);
 t2fs_record* FS_findRecordInArray(DWORD dataPtr[], BYTE* block, DWORD* blockAddress, char* name, int count);
 int FS_findEmptyInArray(DWORD dataPtr[], BYTE* block, DWORD* blockAddress, int count);
-int FS_delete(FilePath* filePath);
-t2fs_file FS_open(FilePath* filePath);
+int FS_delete(FilePath* const filePath);
+t2fs_file FS_open(FilePath* const filePath);
 #endif

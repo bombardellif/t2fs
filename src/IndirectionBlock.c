@@ -20,10 +20,9 @@ Record* IB_find(IndirectionBlock* this, char* name, int level, BYTE* block, DWOR
         //Iterates over this indirection block (which is a double one). for each indirection block apointed tries to find
         int i;
         for(i = 0; i < fileSystem.superBlock.BlockSize / sizeof(DWORD);i++){
-            if (this->dataPtr[i] != IB_NULL_BLOCK_POINTER){
-                //Reads one single indirection block
-                DAM_read(this->dataPtr[i], block);
-                
+            //Reads one single indirection block
+            if (!DAM_read(this->dataPtr[i], block)){
+
                 IndirectionBlock indirectionBlock;
                 IB_IndirectionBlock(&indirectionBlock, block);
 
@@ -32,6 +31,7 @@ Record* IB_find(IndirectionBlock* this, char* name, int level, BYTE* block, DWOR
                     return foundRecord;
                 }
             }
+            //else do nothing, jsut keep on trying
         }
     }else{
         return NULL;
