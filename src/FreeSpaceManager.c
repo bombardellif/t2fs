@@ -12,7 +12,7 @@
 
 extern FileSystem fileSystem;
 
-#define FSM_blockNumberInBitmapFile(add, blocksize) (add / (FSM_BITS_PER_BYTE * blockSize))
+#define FSM_blockNumberInBitmapFile(add, blockSize) (add / (FSM_BITS_PER_BYTE * blockSize))
 #define FSM_byteOffsetInBlock(add, blockSize)       ((add / FSM_BITS_PER_BYTE) % blockSize)
 #define FSM_bitOffsetInByte(add)    (address % FSM_BITS_PER_BYTE)
 

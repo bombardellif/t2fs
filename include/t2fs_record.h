@@ -17,7 +17,7 @@ void TR_t2fs_record(Record* this, BYTE typeVal, char* name, DWORD blocksFileSize
 Record* TR_find(Record* this, FilePath* const filePath, OpenRecord* openRecord, BYTE* block, Record*(*find)(const DirectoryBlock* const this, const char* const notUsed), BYTE blockTrace[], DWORD* recordPointerTrace[], DWORD blockAddress[]);
 Record* TR_findRecordInRecord(Record* this, OpenRecord* openRecord, BYTE* block, Record*(*find)(const DirectoryBlock* const this, const char* const notUsed), char* param);
 int TR_addRecord(Record* this, Record newRecord, OpenRecord* newOpenRecord);
-void TR_freeBlocks(Record* this);
+int TR_freeBlocks(Record* this);
 int TR_allocateNewDirectoryBlock(Record* this, BYTE* block, DWORD* blockAddress);
 int TR_findBlockByNumber(Record* this, DWORD number, BYTE* block, DWORD* blockAddress);
 
