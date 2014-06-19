@@ -2,6 +2,7 @@
 #include "DiscAccessManager.h"
 #include "FileSystem.h"
 #include "IndirectionBlock.h"
+#include "FreeSpaceManager.h"
 #include <stdlib.h>
 #include <assert.h>
 
@@ -42,7 +43,7 @@ Record* TR_findRecordInRecord(Record* this, OpenRecord* openRecord, BYTE* block,
     //First try to find in the dataPtrs of this record
     foundRecord = FS_findRecordInArray(this->dataPtr, block, openRecord->blockAddress, find, param, TR_DATAPTRS_IN_RECORD);
     
-    //If did not find, searches through Single Indirection Pointer (if not null)
+    //If did not find, searches through Single Indirection Pointer
     if (foundRecord == NULL){
         BYTE blockOfIndirection[fileSystem.superBlock.BlockSize];
         if (!DAM_read(this->singleIndPtr, blockOfIndirection)){
@@ -53,7 +54,7 @@ Record* TR_findRecordInRecord(Record* this, OpenRecord* openRecord, BYTE* block,
             foundRecord = IB_find(&indirectionBlock, param, 1, block, &(openRecord->blockAddress), find);
         }
     }
-    //If hasn't found yet, searches through Double Indirection Pointer (if not null)
+    //If hasn't found yet, searches through Double Indirection Pointer
     if (foundRecord == NULL){
         BYTE blockOfIndirection[fileSystem.superBlock.BlockSize];
         if (!DAM_read(this->doubleIndPtr, blockOfIndirection)){
@@ -101,6 +102,7 @@ int TR_addRecord(Record* this, Record newRecord, OpenRecord* newOpenRecord)
                 //Before returning, updates the newOpenRecord
                 newOpenRecord->record = newRecord;
                 //Doesn't need to save anything on disc. the allocation has done that
+                //@TODO lie
                 //Return modified signal, because the allocation may have altered this record (new dataPtr for example)
                 return T2FS_RECORD_MODIFIED;
             }else{
@@ -126,13 +128,178 @@ void TR_freeBlocks(Record* this)
 {
 }
 
-Record* TR_findEmptyEntry(Record* this, OpenRecord* openRecord, BYTE* block)
-{
-	return 0;
-}
-
 int TR_allocateNewDirectoryBlock(Record* this, BYTE* block, DWORD* blockAddress)
 {
+    if (this == NULL || block == NULL || blockAddress == NULL)
+        return T2FS_ADDRECORD_INVALID_ARGUMENT;
+    
+    DWORD** updatedPointer = NULL;
+    
+    //First try to find in the dataPtrs of this record
+    assert(this->dataPtr);
+    int writtenPos = TR_findEmptyPositionInArray(this->dataPtr, TR_DATAPTRS_IN_RECORD);
+    
+    //If did not find, searches through Single Indirection Pointer
+    if (writtenPos < 0){
+        //If the single indirection pointer is null...
+        if (this->singleIndPtr == FS_NULL_BLOCK_POINTER){
+            //Allocate a new Indirection Block on it
+            DWORD indirectionBlockAddress;
+            BYTE indirectionBlockMem[fileSystem.superBlock.BlockSize];
+            
+            TR__allocateNewIndirectionBlock(&indirectionBlockMem, &indirectionBlockAddress);
+            this->singleIndPtr = indirectionBlockAddress;
+            
+            IndirectionBlock indirectionBlock;
+            IB_IndirectionBlock(&indirectionBlock, &indirectionBlockMem);
+            //The first position of the new ind block will be updated
+            updatedPointer = &indirectionBlock.dataPtr[0];
+            
+            //Write to disc the new indirection block just created
+            if (DAM_write(this->singleIndPtr, indirectionBlockMem) != 0){
+                return T2FS_ADDRECORD_IOERROR;
+            }
+        }else{
+            //Look inside this single indirection block
+            BYTE blockOfIndirection[fileSystem.superBlock.BlockSize];
+            if (!DAM_read(this->singleIndPtr, &blockOfIndirection)){
+                
+                IndirectionBlock singleIndirectionBlock;
+                IB_IndirectionBlock(&singleIndirectionBlock, &blockOfIndirection);
+                if (IB_allocateNewDirectoryBlock(&singleIndirectionBlock, 1, block, blockAddress) != IB_SUCCESS){
+                    
+                    //Here, it hasn't found in the single Ind pointer. Try to find in the double
+                    if (this->doubleIndPtr == FS_NULL_BLOCK_POINTER){
+                        //Allocate a new Indirection Block on it
+                        DWORD indirectionBlockAddress;
+                        BYTE indirectionBlockMem[fileSystem.superBlock.BlockSize];
+
+                        TR__allocateNewIndirectionBlock(&indirectionBlockMem, &indirectionBlockAddress);
+                        this->doubleIndPtr = indirectionBlockAddress;
+                        
+                        //The first position of the new ind block will be updated with another ind block
+                        IndirectionBlock indirectionBlock;
+                        IB_IndirectionBlock(&indirectionBlock, &indirectionBlockMem);
+                        
+                        //Create new indirection block (child), which will be updated in fact
+                            DWORD childIndirectionBlockAddress;
+                            BYTE childIndirectionBlockMem[fileSystem.superBlock.BlockSize];
+                            TR__allocateNewIndirectionBlock(&childIndirectionBlockMem, &childIndirectionBlockAddress);
+                            
+                            IndirectionBlock childIndirectionBlock;
+                            IB_IndirectionBlock(&childIndirectionBlock, &childIndirectionBlockMem);
+                            updatedPointer = &childIndirectionBlock.dataPtr[0];
+                            
+                        indirectionBlock.dataPtr[0] = childIndirectionBlockAddress;
+                        
+                        //Write to disc the new indirection blocks just created
+                        if (DAM_write(this->doubleIndPtr, &indirectionBlockMem) == 0){
+                            if (DAM_write(childIndirectionBlockAddress, &childIndirectionBlockMem) != 0)
+                                return T2FS_ADDRECORD_IOERROR;
+                        }else{
+                            return T2FS_ADDRECORD_IOERROR;
+                        }
+                    }else{
+                        //Here, the double ind pointer alreafy exists. Then try to find and empty space in it
+                        BYTE blockOfIndirection[fileSystem.superBlock.BlockSize];
+                        if (!DAM_read(this->doubleIndPtr, &blockOfIndirection)){
+                            if (IB_allocateNewDirectoryBlock(&blockOfIndirection, 2, block, blockAddress) != IB_SUCCESS){
+                                return T2FS_ADDRECORD_CANT_ALLOCATE;
+                            }else{
+                                //If has found and empty space and allocated a new dir block inside the double ind block
+                                IndirectionBlock doubeIndirectionBlock;
+                                IB_IndirectionBlock(&doubeIndirectionBlock, &blockOfIndirection);
+                                
+                                //Write to disc the indirection block just modified
+                                if (DAM_write(&doubeIndirectionBlock, &blockOfIndirection) != 0){
+                                    return T2FS_ADDRECORD_IOERROR;
+                                }
+                                //The pointers in this record doesn't need to be updated
+                                updatedPointer = NULL;
+                            }
+                        }else{
+                            return T2FS_ADDRECORD_IOERROR;
+                        }
+                    }
+                }else{
+                    //Here, it has found and allocated a new dir block inside the single ind block.
+                    //Write to disc the indirection block just modified
+                    if (DAM_write(&singleIndirectionBlock, &blockOfIndirection) != 0){
+                        return T2FS_ADDRECORD_IOERROR;
+                    }
+                    //The pointers in this record doesn't need to be updated
+                    updatedPointer = NULL;
+                }
+            }else{
+                return T2FS_ADDRECORD_IOERROR;
+            }
+        }
+    }else{
+        //Found an empty place in the dataptrs of the record. Update it
+        updatedPointer = &this->dataPtr[writtenPos];
+    }
+    
+    if (updatedPointer != NULL){
+        if (TR_allocateNewBlock(blockAddress) == T2FS_ADDRECORD_SUCCESS){
+            //Initialize block with null pointers
+            memset(block, FS_NULL_BLOCK_POINTER, fileSystem.superBlock.BlockSize);
+            //updates data pointer with new block address
+            **updatedPointer = *blockAddress;
+            //Saves modification to disc
+            if (DAM_write(*blockAddress, block) != 0){
+                return T2FS_ADDRECORD_IOERROR;
+            }
+        }else{
+            return T2FS_ADDRECORD_CANT_ALLOCATE;
+        }
+    }
+    return T2FS_ADDRECORD_SUCCESS;
+}
+
+int TR_allocateNewBlock(DWORD* blockAddress){
+    //Allocate new block for the directory block
+    int freeAddressSignal = FSM_getFreeAddress(blockAddress);
+    if (freeAddressSignal == 0){ //Success
+        if (!FSM_markAsUsed(blockAddress)){ //Success
+            return T2FS_ADDRECORD_SUCCESS;
+        }else{
+            return T2FS_ADDRECORD_IOERROR;
+        }
+    }else{
+        return T2FS_ADDRECORD_CANT_ALLOCATE;
+    }
+}
+
+static int TR__allocateNewIndirectionBlock(BYTE* indirectionBlockMem, DWORD* indirectionBlockAddress)
+{
+    if (TR_allocateNewBlock(indirectionBlockAddress) == T2FS_ADDRECORD_SUCCESS){
+        //Initialize block with null pointers
+        memset(indirectionBlockMem, FS_NULL_BLOCK_POINTER, fileSystem.superBlock.BlockSize);
+
+        if (!DAM_write(indirectionBlockAddress, indirectionBlockMem)){
+            return T2FS_ADDRECORD_SUCCESS;
+        }else{
+            return T2FS_ADDRECORD_IOERROR;
+        }
+    }else{
+        return T2FS_ADDRECORD_CANT_ALLOCATE;
+    }
+}
+
+int TR_findEmptyPositionInArray(const DWORD const dataPtr[], const unsigned int count)
+{
+    if (dataPtr != NULL)
+        return NULL;
+    
+    //Iterates over data pointer, looking for one empty
+	for (int i = 0; i < count; i++){
+        if (dataPtr[i] == FS_NULL_BLOCK_POINTER){
+            return i;
+        }
+        //else do nothing, just keep trying
+    }
+    //Did not find any empty position
+    return T2FS_ADDRECORD_DIDNT_FIND;
 }
 
 /**

@@ -3,7 +3,10 @@
 
 #include "t2fs.h"
 #include "DirectoryBlock.h"
-#define IB_NULL_BLOCK_POINTER 0xFFFFFFFF
+
+#define IB_INVALID_ARGUMENT -1
+#define IB_CANT_ALLOCATE -2
+#define IB_SUCCESS 0
 
 typedef struct s_IndirectionBlock{
 	DWORD* dataPtr;

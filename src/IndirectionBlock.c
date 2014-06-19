@@ -45,7 +45,23 @@ Record* IB_find(IndirectionBlock* this, char* name, int level, BYTE* block, DWOR
 
 int IB_allocateNewDirectoryBlock(IndirectionBlock* this, int level, BYTE* block, DWORD* blockAddress)
 {
-	return 0;
+	if (this == NULL)
+        return IB_INVALID_ARGUMENT;
+    
+    int writtenPos = TR_findEmptyPositionInArray(this->dataPtr, fileSystem.superBlock.BlockSize / sizeof(DWORD));
+
+    if (writtenPos >= 0){
+        if (TR_allocateNewBlock(blockAddress) == TR_ADDRECORD_SUCCESS){
+            //Initialize block with null pointers
+            memset(block, FS_NULL_BLOCK_POINTER, fileSystem.superBlock.BlockSize);
+            //updates data pointer with new block address
+            this->dataPtr[writtenPos] = blockAddress;
+            //@TODO save
+            return IB_SUCCESS;
+        }else{
+            return IB_CANT_ALLOCATE;
+        }
+    }
 }
 
 int IB_findBlockByNumber(IndirectionBlock* this, int level, DWORD number, BYTE* block, DWORD* blockAddress)
