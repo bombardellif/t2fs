@@ -18,7 +18,7 @@ Record* TR_find(Record* this, FilePath* const filePath, OpenRecord* openRecord, 
 int TR_addRecord(Record* this, Record newRecord, OpenRecord* newOpenRecord);
 void TR_freeBlocks(Record* this);
 Record* TR_findEmptyEntry(Record* this, OpenRecord* openRecord, BYTE* block);
-void TR_allocateNewDirectoryBlock(Record* this, BYTE* block, DWORD* blockAddress);
+int TR_allocateNewDirectoryBlock(Record* this, BYTE* block, DWORD* blockAddress);
 int TR_findBlockByNumber(Record* this, DWORD number, BYTE* block, DWORD* blockAddress);
 
 #endif
