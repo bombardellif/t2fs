@@ -4,7 +4,7 @@
 #include "t2fs.h"
 
 typedef struct s_FreeSpaceManager{
-	t2fs_record bitmap;
+	Record bitmap;
 } FreeSpaceManager;
 
 void FSM_delete(DWORD address);
