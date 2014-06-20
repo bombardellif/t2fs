@@ -31,6 +31,11 @@ Record* TR_find(Record* this, FilePath* const filePath, OpenRecord* openRecord, 
         return NULL;
     
     char* currentNode = FP_getNextNode(filePath);
+    //Does not have current Node ( filepath == "/" or filepath == "" )
+    if (currentNode == NULL){
+        block = NULL;
+        return this;
+    }
     
     Record* foundRecord = TR_findRecordInRecord(this, openRecord, block, find, currentNode);
     
@@ -124,7 +129,6 @@ int TR_addRecord(Record* this, Record newRecord, OpenRecord* newOpenRecord)
     }
     //Saves the modification into disc
     assert(modifiedBlock != NULL);
-    // FIXME - IF SUPERBLOCK SEND TRUE IN THE PARAMETER
     if (DAM_write(newOpenRecord->blockAddress, modifiedBlock, FALSE) == 0){ //Success
         //Return modified signal, because the allocation may have altered this record (new dataPtr for example)
         return T2FS_RECORD_MODIFIED;
@@ -240,11 +244,15 @@ int TR_allocateNewDirectoryBlock(Record* this, BYTE* block, DWORD* blockAddress)
                 memset(block, FS_NULL_BLOCK_POINTER, fileSystem.superBlock.BlockSize);
                 //updates data pointer with new block address
                 singleIndirectionBlock.dataPtr[writtenPos] = *blockAddress;
-                //Saves modification to disc
+                //Saves modification to disc (diirectory block)
                 if (DAM_write(*blockAddress, block, FALSE) != 0){
                     return T2FS_IOERROR;
                 }else{
-                    return T2FS_SUCCESS;
+                    //Write to disc the indirection block just modified
+                    if (DAM_write(this->singleIndPtr, indirectionBlockMem, FALSE) != 0){
+                        return T2FS_IOERROR;
+                    }else
+                        return T2FS_SUCCESS;
                 }
             }else{
                 return T2FS_CANT_ALLOCATE;
