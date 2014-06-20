@@ -32,7 +32,8 @@ Record* DB_findEmpty(const DirectoryBlock* const this, const char* const notUsed
 {
 	unsigned int count = numOfEntriesInBlock(fileSystem.superBlock.BlockSize);
     for (int i=0; i < count; i++) {
-        if (this->entries[i].TypeVal == TYPEVAL_INVALIDO) {
+        if (this->entries[i].TypeVal != TYPEVAL_DIRETORIO
+        && this->entries[i].TypeVal != TYPEVAL_REGULAR) {
             return & this->entries[i];
         }
     }

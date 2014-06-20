@@ -26,7 +26,7 @@ t2fs_file t2fs_create (char *nome)
     FP_destroy(&filePath);
     
     if(returnValue < 0){
-        returnValue = TR_INVALID_FILENAME;
+        returnValue = T2FS_INVALID_ARGUMENT;
     }
     
     return returnValue;

@@ -216,7 +216,7 @@ int TR_allocateNewDirectoryBlock(Record* this, BYTE* block, DWORD* blockAddress)
             //Allocate a new Indirection Block on it
             DWORD indirectionBlockAddress;
             
-            if (TR_allocateNewIndirectionBlock(indirectionBlockMem, &indirectionBlockAddress) == TR_SUCCESS){
+            if (TR_allocateNewIndirectionBlock(indirectionBlockMem, &indirectionBlockAddress) == T2FS_SUCCESS){
                 this->singleIndPtr = indirectionBlockAddress;
                 //Write to disc the new indirection block just created
                 if (DAM_write(this->singleIndPtr, indirectionBlockMem, FALSE) != 0){
@@ -265,7 +265,7 @@ int TR_allocateNewDirectoryBlock(Record* this, BYTE* block, DWORD* blockAddress)
                 //Allocate a new Indirection Block on it
                 DWORD indirectionBlockAddress;
 
-                if(TR_allocateNewIndirectionBlock(indirectionBlockMem, &indirectionBlockAddress) == TR_SUCCESS){
+                if(TR_allocateNewIndirectionBlock(indirectionBlockMem, &indirectionBlockAddress) == T2FS_SUCCESS){
                     this->doubleIndPtr = indirectionBlockAddress;
                     //Write to disc the new indirection block just created
                     if (DAM_write(this->doubleIndPtr, indirectionBlockMem, FALSE) != 0){

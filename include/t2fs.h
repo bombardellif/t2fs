@@ -19,12 +19,12 @@ typedef int t2fs_file;
 #define TR_FILENAME_MAXSIZE 39
 #define TR_DATAPTRS_IN_RECORD 2
 
-#define TR_SUCCESS 0
-#define TR_INVALID_FILENAME -1
-#define TR_RECORD_MODIFIED -2
-#define TR_FAIL -3
-
-
+#define T2FS_SUCCESS 0
+#define T2FS_RECORD_MODIFIED -1
+#define T2FS_INVALID_ARGUMENT -2
+#define T2FS_CANT_ALLOCATE -3
+#define T2FS_IOERROR -4
+#define T2FS_DIDNT_FIND -5
 
 /** Registro de diretório (entrada de diretório) */
 struct t2fs_record {

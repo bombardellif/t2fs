@@ -7,13 +7,6 @@
 #include "DirectoryBlock.h"
 #include "FileSystem.h"
 
-#define T2FS_SUCCESS 0
-#define T2FS_RECORD_MODIFIED -1
-#define T2FS_INVALID_ARGUMENT -2
-#define T2FS_CANT_ALLOCATE -3
-#define T2FS_IOERROR -4
-#define T2FS_DIDNT_FIND -5
-
 void TR_Record(Record* this, BYTE typeVal, char* name, DWORD blocksFileSize, DWORD bytesFileSize);
 /** @TODO */
 void TR_destroy(Record* this);

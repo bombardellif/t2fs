@@ -51,7 +51,7 @@ t2fs_file FS_create(FilePath* const filePath)
         parentOpenRecord.record = *parentRecord;
 
         int writingSignal;
-        if (addRecordSignal == TR_RECORD_MODIFIED){
+        if (addRecordSignal == T2FS_RECORD_MODIFIED){
             //If modified a directory and it is not the root directory
             if (parentBlock != NULL){
                 writingSignal = DAM_write(parentOpenRecord.blockAddress, parentBlock, FALSE);
@@ -61,10 +61,10 @@ t2fs_file FS_create(FilePath* const filePath)
                 writingSignal = DAM_write(FS_SUPERBLOCK_ADDRESS, (BYTE*)&fileSystem.superBlock, TRUE);
             }
             if (writingSignal != 0){
-                addRecordSignal = TR_FAIL;
+                addRecordSignal = T2FS_IOERROR;
             }
         }
-        if(addRecordSignal == TR_SUCCESS || addRecordSignal == TR_RECORD_MODIFIED){
+        if(addRecordSignal == T2FS_SUCCESS || addRecordSignal == T2FS_RECORD_MODIFIED){
             t2fs_file newHandle = FS_createHandle(newOpenRecord);
             if (newHandle < 0){
                 return FS_CREATESUCCESS_BUT_OPENPROBLEM;
@@ -151,7 +151,7 @@ t2fs_file FS_createHandle(OpenRecord openRecord)
 
 Record* FS_findRecordInArray(DWORD dataPtr[], BYTE* block, DWORD* blockAddress, Record*(*find)(const DirectoryBlock* const,const char* param), char* name, int count)
 {
-    if (count <= 0 || name != NULL || dataPtr != NULL)
+    if (count <= 0 || dataPtr == NULL)
         return NULL;
     
     //Iterates over data pointer, looking for the directory block that has the record of the file of name "name"
