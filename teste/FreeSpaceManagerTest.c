@@ -19,26 +19,25 @@ extern FileSystem fileSystem;
 
 void testGetFreeAddress1() {
     printf("FreeSpaceManagerTest test 1\n");
-    
+    FS_initilize();
     DWORD address, newAddress;
     ////Supose there is enough free space in disc
     if (FSM_getFreeAddress(&address) == 0){
         if (address > fileSystem.superBlock.NofBlocks)
-            printf("%%TEST_FAILED%% time=0 testname=testGetFreeAddress1 (FreeSpaceManagerTest) message=error message sample\n");
-        
+            printf("%%TEST_FAILED%% time=0 testname=testGetFreeAddress1 (FreeSpaceManagerTest) message=Assertion 0\n");
         
         if (FSM_markAsUsed(address) == 0){
             FSM_getFreeAddress(&newAddress);
             if (address == newAddress)
-                printf("%%TEST_FAILED%% time=0 testname=testGetFreeAddress1 (FreeSpaceManagerTest) message=error message sample\n");
+                printf("%%TEST_FAILED%% time=0 testname=testGetFreeAddress1 (FreeSpaceManagerTest) message=Assertion 1\n");
             if (FSM_delete(address) != 0)
-                printf("%%TEST_FAILED%% time=0 testname=testGetFreeAddress1 (FreeSpaceManagerTest) message=error message sample\n");
+                printf("%%TEST_FAILED%% time=0 testname=testGetFreeAddress1 (FreeSpaceManagerTest) message=Assertion 2\n");
             
         }else{
-            printf("%%TEST_FAILED%% time=0 testname=testGetFreeAddress1 (FreeSpaceManagerTest) message=error message sample\n");
+            printf("%%TEST_FAILED%% time=0 testname=testGetFreeAddress1 (FreeSpaceManagerTest) message=Assertion 30\n");
         }
     }else{
-        printf("%%TEST_FAILED%% time=0 testname=testGetFreeAddress1 (FreeSpaceManagerTest) message=error message sample\n");
+        printf("%%TEST_FAILED%% time=0 testname=testGetFreeAddress1 (FreeSpaceManagerTest) message=Assertion 4\n");
     }
     
 }
@@ -53,7 +52,7 @@ void testGetFreeAddress2() {
     memset(block, 0, fileSystem.superBlock.BlockSize);
     memset(suposedBlock, 0, fileSystem.superBlock.BlockSize);
     
-    DAM_write(1, block);
+    DAM_write(1, block, FALSE);
     
     fileSystem.superBlock.BitMapReg.dataPtr[0] = 1;
     fileSystem.superBlock.BitMapReg.dataPtr[1] = FS_NULL_BLOCK_POINTER;
@@ -66,7 +65,7 @@ void testGetFreeAddress2() {
 
         if (FSM_markAsUsed(address) == 0 || 1){
             suposedBlock[0] = 0x80;
-            DAM_read(1, block);
+            DAM_read(1, block, FALSE);
             
             if (strcmp((char*)block, (char*)suposedBlock) != 0)
                 

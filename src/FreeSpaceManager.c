@@ -31,7 +31,7 @@ int FSM_delete(DWORD address)
     if ((returnCode = TR_findBlockByNumber(&fileSystem.superBlock.BitMapReg, blockNumberInBitmapFile, block, &blockAddress)) == 0) {
         
         // set to zero the correspondent bit of the bitmap for this address
-        block[byteOffsetInBlock] &= ~(0x80 >> bitOffsetInByte);
+        block[byteOffsetInBlock] &= ~(0x01 << bitOffsetInByte);
 
         returnCode = DAM_write(blockAddress, block, FALSE);
     }
@@ -43,7 +43,7 @@ int FSM_getFreeAddress(DWORD* address)
 {
     DWORD blockAddress;
     BYTE block[fileSystem.superBlock.BlockSize + 1]; // allocate one more byte for a null-termination character
-    int returnCode;
+    int returnCode = 0;
     unsigned int blockNumberInBitmapFile = 0;
     
     // place a null after the block data, it is necessary to use the string function below
@@ -68,16 +68,16 @@ int FSM_getFreeAddress(DWORD* address)
                 *address += fullBytesInBlock;
                 
                 // Address calc Level 3: the first free bit in the bytes
-                unsigned short bitMask = 0x7F; // 01111111
+                unsigned short bitMask = 0xFE; // 11111110
                 unsigned short bitOffsetInByte;
                 for (bitOffsetInByte=0; bitOffsetInByte<FSM_BITS_PER_BYTE; bitOffsetInByte++) {
                     
-                    // if the OR operation with the mask results in something different from 0XFF,
+                    // if the OR operation with the mask results in something different of 0XFF,
                     // then the current iteration indicates the free bit in the byte
                     if ((block[fullBytesInBlock] | bitMask) != 0XFF) {
                         break;
                     }
-                    bitMask >>= 1;
+                    bitMask <<= 1;
                 }
                 
                 assert(bitOffsetInByte < FSM_BITS_PER_BYTE);
@@ -107,7 +107,7 @@ int FSM_markAsUsed(DWORD address)
     if ((returnCode = TR_findBlockByNumber(&fileSystem.superBlock.BitMapReg, blockNumberInBitmapFile, block, &blockAddress)) == 0) {
         
         // set to 1 the correspondent bit of the bitmap for this address
-        block[byteOffsetInBlock] |= 0x80 >> bitOffsetInByte;
+        block[byteOffsetInBlock] |= 0x01 << bitOffsetInByte;
 
         returnCode = DAM_write(blockAddress, block, FALSE);
     }

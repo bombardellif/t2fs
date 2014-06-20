@@ -14,7 +14,7 @@ FileSystem fileSystem;
 
 int FS_initilize(){
     fileSystem.SUPERBLOCK_ADDRESS = FS_SUPERBLOCK_ADDRESS;
-    if (DAM_read(fileSystem.SUPERBLOCK_ADDRESS, (BYTE*)(&fileSystem.superBlock), TRUE) == 0){
+    if (DAM_read(fileSystem.SUPERBLOCK_ADDRESS, (BYTE*)(&(fileSystem.superBlock)), TRUE) == 0){
         //Initialize with certain values, so that create handle won't mess things up
         memset(fileSystem.openRecords, TYPEVAL_INVALIDO, FS_OPENRECORDS_MAXSIZE);
         memset(fileSystem.openFiles, -1, FS_OPENFILES_MAXSIZE);

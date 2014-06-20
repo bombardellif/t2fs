@@ -361,7 +361,7 @@ int TR_findBlockByNumber(Record* this, DWORD number, BYTE* block, DWORD* blockAd
         
         *blockAddress = this->dataPtr[number];
         // Read the desired block
-        returnCode =  DAM_read(this->dataPtr[number], block, FALSE);
+        returnCode = DAM_read(this->dataPtr[number], block, FALSE);
     }
     // subtract the number of dataPtr in the record from the "number" and check
     // if the block is in the first indirection pointer

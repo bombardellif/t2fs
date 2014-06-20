@@ -55,12 +55,36 @@ void testDAM_read() {
                 printf("Block FS: \t%u\n", root.entries[i].blocksFileSize);
                 printf("Bytes FS: \t%u\n", root.entries[i].bytesFileSize);
             }
+            
+            BYTE block2[sb.BlockSize];
+            result = DAM_read(root.entries[0].dataPtr[0], block2, FALSE);
+            printf("%s\n", block2);
+            
+            result = DAM_read(root.entries[1].dataPtr[0], block2, FALSE);
+            printf("%s\n", block2);
+            result = DAM_read(root.entries[1].dataPtr[1], block2, FALSE);
+            printf("%s\n", block2);
+            result = DAM_read(root.entries[1].singleIndPtr, block2, FALSE);
+            DirectoryBlock dir;
+            DB_DirectoryBlock(&dir, block2);
+            DAM_read(dir.entries[0].dataPtr[0], block2, FALSE);
+            printf("%d\n", block2);
+            
+            result = DAM_read(root.entries[2].dataPtr[0], block2, FALSE);
+            printf("%s\n", block2);
+            result = DAM_read(root.entries[2].dataPtr[1], block2, FALSE);
+            printf("%s\n", block2);
+            
+            
+            result = DAM_read(root.entries[3].dataPtr[0], block2, FALSE);
+            printf("%s\n", block2);
+            
         } else {
             printf("%%TEST_FAILED%% time=0 testname=testDAM_read (DiscAccessManagerTest) message=error reading\n");
         }
         
         blockAddress = sb.BitMapReg.dataPtr[0];
-        result = DAM_read(blockAddress, (BYTE*)(&block), FALSE);
+        result = DAM_read(blockAddress, (BYTE*)(block), FALSE);
         
         if (!result) {
             IndirectionBlock root;
@@ -80,9 +104,38 @@ void testDAM_read() {
 
 void testDAM_write() {
     DWORD blockAddress;
-    BYTE* data;
-    //int result = DAM_write(blockAddress, data);
-    if (1 /*check result*/) {
+    SuperBlock sb;
+    FS_initilize();
+    
+    blockAddress = FS_SUPERBLOCK_ADDRESS;
+    int result = DAM_read(blockAddress, (BYTE*)(&sb), TRUE);
+    
+    if (!result) {
+        
+        blockAddress = sb.RootDirReg.dataPtr[0];
+        BYTE block[sb.BlockSize];
+        result = DAM_read(blockAddress, (BYTE*)(block), FALSE);
+        
+        if (!result) {
+            
+            DirectoryBlock root;
+            DB_DirectoryBlock(&root, block);
+            
+            BYTE block2[sb.BlockSize];
+            result = DAM_read(root.entries[0].dataPtr[0], block2, FALSE);
+            printf("%s\n", block2);
+            strcat(block2, " - TESTE DE ALTERAÇÃO DE ARQUIVO");
+            
+            result = DAM_write(root.entries[0].dataPtr[0], block2, FALSE);
+            if (!result) {
+                
+                DAM_read(root.entries[0].dataPtr[0], block2, FALSE);
+                printf("%s\n", block2);
+            } else {
+                printf("%%TEST_FAILED%% time=0 testname=testDAM_write (DiscAccessManagerTest) message=error writing\n");
+            }
+        }
+    } else {
         printf("%%TEST_FAILED%% time=0 testname=testDAM_write (DiscAccessManagerTest) message=error message sample\n");
     }
 }
