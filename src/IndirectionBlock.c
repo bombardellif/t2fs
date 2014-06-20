@@ -60,7 +60,7 @@ int IB_allocateNewDirectoryBlock(IndirectionBlock* this, int level, BYTE* block,
             //Create new indirection block (child), which will be updated in fact
             DWORD childIndirectionBlockAddress;
             BYTE childIndirectionBlockMem[fileSystem.superBlock.BlockSize];
-            if (TR_allocateNewIndirectionBlock(childIndirectionBlockMem, &childIndirectionBlockAddress) == TR_ADDRECORD_SUCCESS){
+            if (TR_allocateNewIndirectionBlock(childIndirectionBlockMem, &childIndirectionBlockAddress) == TR_SUCCESS){
             
                 //Allocate New Block, pointed by the new indirection block
                 if (TR_allocateNewBlock(blockAddress)){

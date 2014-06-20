@@ -14,16 +14,20 @@ FileSystem fileSystem;
 
 int FS_initilize(){
     fileSystem.SUPERBLOCK_ADDRESS = FS_SUPERBLOCK_ADDRESS;
-    DAM_read(fileSystem.SUPERBLOCK_ADDRESS, (BYTE*)(&fileSystem.superBlock));
-    //Initialize with certain values, so that create handle won't mess things up
-    memset(fileSystem.openRecords, TYPEVAL_INVALIDO, FS_OPENRECORDS_MAXSIZE);
-    memset(fileSystem.openFiles, -1, FS_OPENFILES_MAXSIZE);    
+    if (DAM_read(fileSystem.SUPERBLOCK_ADDRESS, (BYTE*)(&fileSystem.superBlock)) == 0){
+        //Initialize with certain values, so that create handle won't mess things up
+        memset(fileSystem.openRecords, TYPEVAL_INVALIDO, FS_OPENRECORDS_MAXSIZE);
+        memset(fileSystem.openFiles, -1, FS_OPENFILES_MAXSIZE);
+        return FS_SUCCESS;
+    }else{
+        return FS_CREATE_FAIL;
+    }
 }
 
 t2fs_file FS_create(FilePath* const filePath)
 {
     if (filePath == NULL){
-        return FS_CREATEPROBLEM_INVALID_PATH;
+        return FS_INVALID_PATH;
     }
     //Directory Path until folder to create new file
 	FilePath dirPath;
@@ -57,10 +61,10 @@ t2fs_file FS_create(FilePath* const filePath)
                 writingSignal = DAM_write(FS_SUPERBLOCK_ADDRESS, (BYTE*)&fileSystem.superBlock);
             }
             if (writingSignal != 0){
-                addRecordSignal = TR_ADDRECORD_FAIL;
+                addRecordSignal = TR_FAIL;
             }
         }
-        if(addRecordSignal == TR_ADDRECORD_SUCCESS || addRecordSignal == TR_RECORD_MODIFIED){
+        if(addRecordSignal == TR_SUCCESS || addRecordSignal == TR_RECORD_MODIFIED){
             t2fs_file newHandle = FS_createHandle(newOpenRecord);
             if (newHandle < 0){
                 return FS_CREATESUCCESS_BUT_OPENPROBLEM;
@@ -72,7 +76,7 @@ t2fs_file FS_create(FilePath* const filePath)
             return FS_CREATE_FAIL;
         }
     }else{
-        return FS_CREATEPROBLEM_INVALID_PATH;
+        return FS_INVALID_PATH;
     }
 }
 
@@ -120,7 +124,7 @@ t2fs_file FS_createHandle(OpenRecord openRecord)
             //The address of the handle just created
             return possiblePlaceFiles;
         }else{
-            return FS_OPENPROBLEM_FILEPOINTER_SPACE_UNAVAILABLE;
+            return FS_FILEPOINTER_SPACE_UNAVAILABLE;
         } 
     }else{
         //If file is not open yet and there is place in fileSystem open record then...
@@ -137,10 +141,10 @@ t2fs_file FS_createHandle(OpenRecord openRecord)
                 return possiblePlaceFiles;
                 
             }else{
-                return FS_OPENPROBLEM_FILEPOINTER_SPACE_UNAVAILABLE;
+                return FS_FILEPOINTER_SPACE_UNAVAILABLE;
             } 
         }else{
-            return FS_OPENPROBLEM_RECORDPOINTER_SPACE_UNAVAILABLE;
+            return FS_RECORDPOINTER_SPACE_UNAVAILABLE;
         }
     }
 }
@@ -175,7 +179,7 @@ Record* FS_findRecordInArray(DWORD dataPtr[], BYTE* block, DWORD* blockAddress, 
 int FS_delete(FilePath* const filePath)
 {
 	if (filePath == NULL){
-        return FS_CREATEPROBLEM_INVALID_PATH;
+        return FS_INVALID_PATH;
     }
     
     int returnCode;

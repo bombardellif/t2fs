@@ -7,6 +7,15 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include "t2fs.h"
+#include "DirectoryBlock.h"
+#include "FileSystem.h"
+#include "DiscAccessManager.h"
+#include "IndirectionBlock.h"
+#include "FreeSpaceManager.h"
+
+extern FileSystem fileSystem;
 
 /*
  * Simple C Test Suite
@@ -14,11 +23,41 @@
 
 void testFind1() {
     printf("IndirectionBlockTest test 1\n");
-}
-
-void test2() {
-    printf("IndirectionBlockTest test 2\n");
-    printf("%%TEST_FAILED%% time=0 testname=test2 (IndirectionBlockTest) message=error message sample\n");
+    char name1[10] = "William\0";
+    
+    Record arq1;
+    arq1.TypeVal = TYPEVAL_REGULAR;
+    strcpy(arq1.name, name1);
+    
+    DirectoryBlock dirBlock;
+    BYTE block[fileSystem.superBlock.BlockSize];
+    memset(block, TYPEVAL_INVALIDO, fileSystem.superBlock.BlockSize);
+    
+    DB_DirectoryBlock(&dirBlock, block);
+    dirBlock.entries[0] = arq1;
+    
+    DWORD blockAddress;
+    FSM_getFreeAddress(&blockAddress);
+    printf("%d", blockAddress);
+    if (!DAM_write(blockAddress, block)){
+        IndirectionBlock ib;
+        BYTE iblock[fileSystem.superBlock.BlockSize];
+        memset(iblock, FS_NULL_BLOCK_POINTER, fileSystem.superBlock.BlockSize);
+        IB_IndirectionBlock(&ib, iblock);
+        ib.dataPtr[0] = blockAddress;
+        
+        BYTE b[fileSystem.superBlock.BlockSize];
+        DWORD ba;
+        if (IB_find(&ib, name1, 1, b, &ba, DB_findByName) == IB_SUCCESS){
+            if (strcmp((char*)block, (char*)b) == 0){
+                if (blockAddress != ba)
+                    printf("%%TEST_FAILED%% time=0 testname=testFind1 (IndirectionBlockTest) message=address are different\n");
+            }else
+              printf("%%TEST_FAILED%% time=0 testname=testFind1 (IndirectionBlockTest) message=blocks are different\n");  
+        }else
+            printf("%%TEST_FAILED%% time=0 testname=testFind1 (IndirectionBlockTest) message=find fail\n");
+    }else
+        printf("%%TEST_FAILED%% time=0 testname=testFind1 (IndirectionBlockTest) message=1st write fail\n");
 }
 
 int main(int argc, char** argv) {
@@ -28,10 +67,6 @@ int main(int argc, char** argv) {
     printf("%%TEST_STARTED%% testFind1 (IndirectionBlockTest)\n");
     testFind1();
     printf("%%TEST_FINISHED%% time=0 testFind1 (IndirectionBlockTest) \n");
-
-    printf("%%TEST_STARTED%% test2 (IndirectionBlockTest)\n");
-    test2();
-    printf("%%TEST_FINISHED%% time=0 test2 (IndirectionBlockTest) \n");
 
     printf("%%SUITE_FINISHED%% time=0\n");
 

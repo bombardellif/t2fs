@@ -16,12 +16,14 @@ typedef int t2fs_file;
 #define TYPEVAL_DIRETORIO   0x02
 #define TYPEVAL_INVALIDO    0xFF    // qualquer outro valor também é invalido
 
-#define CREATE_INVALID_FILENAME 99
 #define TR_FILENAME_MAXSIZE 39
-#define TR_RECORD_MODIFIED 99
-#define TR_ADDRECORD_SUCCESS 99
-#define TR_ADDRECORD_FAIL 99
 #define TR_DATAPTRS_IN_RECORD 2
+
+#define TR_SUCCESS 0
+#define TR_INVALID_FILENAME -1
+#define TR_RECORD_MODIFIED -2
+#define TR_FAIL -3
+
 
 
 /** Registro de diretório (entrada de diretório) */
