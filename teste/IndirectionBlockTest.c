@@ -39,8 +39,7 @@ void testFind1() {
     
     DWORD blockAddress;
     FSM_getFreeAddress(&blockAddress);
-    printf("%u\n-\n", blockAddress);
-    if (!DAM_write(blockAddress, block)){
+    if (!DAM_write(blockAddress, block, FALSE)){
         IndirectionBlock ib;
         BYTE iblock[fileSystem.superBlock.BlockSize];
         memset(iblock, FS_NULL_BLOCK_POINTER, fileSystem.superBlock.BlockSize);
@@ -49,17 +48,12 @@ void testFind1() {
         
         BYTE b[fileSystem.superBlock.BlockSize];
         DWORD ba;
-        if (IB_find(&ib, name1, 1, b, &ba, DB_findByName) == IB_SUCCESS){
+        if (IB_find(&ib, name1, 1, b, &ba, DB_findByName) != NULL){
             if (strcmp((char*)block, (char*)b) == 0){
                 if (blockAddress != ba)
                     printf("%%TEST_FAILED%% time=0 testname=testFind1 (IndirectionBlockTest) message=address are different\n");
             }else{
-              printf("===%d\n",blockAddress);
-              printf("===%d\n",ba);
-              printf("===%d\n",((Record*)block)[0].TypeVal);
-              printf("===%d\n",((Record*)b)[0].TypeVal);
               printf("%%TEST_FAILED%% time=0 testname=testFind1 (IndirectionBlockTest) message=blocks are different\n"); 
-              
             }
         }else
             printf("%%TEST_FAILED%% time=0 testname=testFind1 (IndirectionBlockTest) message=find fail\n");

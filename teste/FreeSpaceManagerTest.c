@@ -59,18 +59,18 @@ void testGetFreeAddress2() {
     fileSystem.superBlock.BitMapReg.singleIndPtr = FS_NULL_BLOCK_POINTER;
     fileSystem.superBlock.BitMapReg.doubleIndPtr = FS_NULL_BLOCK_POINTER;
     
-    if (FSM_getFreeAddress(&address) == 0 || 1){
+    if (FSM_getFreeAddress(&address) == 0){
         if (address != 0)
             printf("%%TEST_FAILED%% time=0 testname=testGetFreeAddress2 (FreeSpaceManagerTest) message=address wrong\n");
 
-        if (FSM_markAsUsed(address) == 0 || 1){
+        if (FSM_markAsUsed(address) == 0){
             suposedBlock[0] = 0x80;
             DAM_read(1, block, FALSE);
             
             if (strcmp((char*)block, (char*)suposedBlock) != 0)
                 
                 printf("%%TEST_FAILED%% time=0 testname=testGetFreeAddress2 (FreeSpaceManagerTest) message=1st block wrong\n");
-            if (FSM_delete(address) == 0 || 1){
+            if (FSM_delete(address) == 0){
                 memset(suposedBlock, 0, fileSystem.superBlock.BlockSize);
                 if (strcmp((char*)block, (char*)suposedBlock) != 0)
                     printf("%%TEST_FAILED%% time=0 testname=testGetFreeAddress2 (FreeSpaceManagerTest) message=2nd block wrong\n");
