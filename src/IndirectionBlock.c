@@ -79,6 +79,12 @@ int IB_allocateNewDirectoryBlock(IndirectionBlock* this, int level, BYTE* block,
                     //updates data pointer of doubleindptr with new indirection block address
                     this->dataPtr[writtenPos] = childIndirectionBlockAddress;
                     
+                    //Write to disc the indirection block just modified
+                    if (DAM_write(childIndirectionBlockAddress, childIndirectionBlockMem, FALSE) != 0){
+                        return T2FS_IOERROR;
+                    }else
+                        return T2FS_SUCCESS;
+                    
                     return IB_SUCCESS;
                 }else{
                     return IB_CANT_ALLOCATE;

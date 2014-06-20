@@ -26,6 +26,7 @@ void testFind1() {
     char name1[10] = "William\0";
     
     Record arq1;
+    memset(&arq1, TYPEVAL_INVALIDO, sizeof(Record));
     arq1.TypeVal = TYPEVAL_REGULAR;
     strcpy(arq1.name, name1);
     
@@ -38,7 +39,7 @@ void testFind1() {
     
     DWORD blockAddress;
     FSM_getFreeAddress(&blockAddress);
-    printf("%d", blockAddress);
+    printf("%u\n-\n", blockAddress);
     if (!DAM_write(blockAddress, block)){
         IndirectionBlock ib;
         BYTE iblock[fileSystem.superBlock.BlockSize];
@@ -52,8 +53,14 @@ void testFind1() {
             if (strcmp((char*)block, (char*)b) == 0){
                 if (blockAddress != ba)
                     printf("%%TEST_FAILED%% time=0 testname=testFind1 (IndirectionBlockTest) message=address are different\n");
-            }else
-              printf("%%TEST_FAILED%% time=0 testname=testFind1 (IndirectionBlockTest) message=blocks are different\n");  
+            }else{
+              printf("===%d\n",blockAddress);
+              printf("===%d\n",ba);
+              printf("===%d\n",((Record*)block)[0].TypeVal);
+              printf("===%d\n",((Record*)b)[0].TypeVal);
+              printf("%%TEST_FAILED%% time=0 testname=testFind1 (IndirectionBlockTest) message=blocks are different\n"); 
+              
+            }
         }else
             printf("%%TEST_FAILED%% time=0 testname=testFind1 (IndirectionBlockTest) message=find fail\n");
     }else
@@ -62,13 +69,17 @@ void testFind1() {
 
 int main(int argc, char** argv) {
     printf("%%SUITE_STARTING%% IndirectionBlockTest\n");
-    printf("%%SUITE_STARTED%%\n");
+    
+    if (FS_initilize() == FS_SUCCESS){    
+        printf("%%SUITE_STARTED%%\n");
 
-    printf("%%TEST_STARTED%% testFind1 (IndirectionBlockTest)\n");
-    testFind1();
-    printf("%%TEST_FINISHED%% time=0 testFind1 (IndirectionBlockTest) \n");
+        printf("%%TEST_STARTED%% testFind1 (IndirectionBlockTest)\n");
+        testFind1();
+        printf("%%TEST_FINISHED%% time=0 testFind1 (IndirectionBlockTest) \n");
 
-    printf("%%SUITE_FINISHED%% time=0\n");
+        printf("%%SUITE_FINISHED%% time=0\n");
+    }else
+        printf("Could not initialize File System\n");
 
     return (EXIT_SUCCESS);
 }
