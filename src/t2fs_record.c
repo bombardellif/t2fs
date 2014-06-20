@@ -59,7 +59,7 @@ Record* TR_findRecordInRecord(Record* this, OpenRecord* openRecord, BYTE* block,
     //If did not find, searches through Single Indirection Pointer
     if (foundRecord == NULL){
         BYTE blockOfIndirection[fileSystem.superBlock.BlockSize];
-        if (!DAM_read(this->singleIndPtr, blockOfIndirection)){
+        if (!DAM_read(this->singleIndPtr, blockOfIndirection, FALSE)){
         
             IndirectionBlock indirectionBlock;
             IB_IndirectionBlock(&indirectionBlock, blockOfIndirection);
@@ -70,7 +70,7 @@ Record* TR_findRecordInRecord(Record* this, OpenRecord* openRecord, BYTE* block,
     //If hasn't found yet, searches through Double Indirection Pointer
     if (foundRecord == NULL){
         BYTE blockOfIndirection[fileSystem.superBlock.BlockSize];
-        if (!DAM_read(this->doubleIndPtr, blockOfIndirection)){
+        if (!DAM_read(this->doubleIndPtr, blockOfIndirection, FALSE)){
         
             IndirectionBlock indirectionBlock;
             IB_IndirectionBlock(&indirectionBlock, blockOfIndirection);
@@ -124,7 +124,8 @@ int TR_addRecord(Record* this, Record newRecord, OpenRecord* newOpenRecord)
     }
     //Saves the modification into disc
     assert(modifiedBlock != NULL);
-    if (DAM_write(newOpenRecord->blockAddress, modifiedBlock) == 0){ //Success
+    // FIXME - IF SUPERBLOCK SEND TRUE IN THE PARAMETER
+    if (DAM_write(newOpenRecord->blockAddress, modifiedBlock, FALSE) == 0){ //Success
         //Return modified signal, because the allocation may have altered this record (new dataPtr for example)
         return T2FS_RECORD_MODIFIED;
     }else{
@@ -153,7 +154,7 @@ int TR_freeBlocks(Record* this)
     // 1 level blocks
     if ((returnCode == 0) && (this->singleIndPtr != FS_NULL_BLOCK_POINTER)) {
         // Read the single indirection block
-        if ((returnCode = DAM_read(this->singleIndPtr, &block)) == 0) {
+        if ((returnCode = DAM_read(this->singleIndPtr, &block, FALSE)) == 0) {
 
             IndirectionBlock indirectionBlock;
             IB_IndirectionBlock(&indirectionBlock, &block);
@@ -165,7 +166,7 @@ int TR_freeBlocks(Record* this)
     // 2 level blocks
     if ((returnCode == 0) && (this->doubleIndPtr != FS_NULL_BLOCK_POINTER)) {
         // Read the double indirection block
-        if ((returnCode = DAM_read(this->doubleIndPtr, &block)) == 0) {
+        if ((returnCode = DAM_read(this->doubleIndPtr, &block, FALSE)) == 0) {
 
             IndirectionBlock indirectionBlock;
             IB_IndirectionBlock(&indirectionBlock, &block);
@@ -195,7 +196,7 @@ int TR_allocateNewDirectoryBlock(Record* this, BYTE* block, DWORD* blockAddress)
             //updates data pointer with new block address
             this->dataPtr[writtenPos] = *blockAddress;
             //Saves modification to disc
-            if (DAM_write(*blockAddress, block) != 0){
+            if (DAM_write(*blockAddress, block, FALSE) != 0){
                 return T2FS_IOERROR;
             }else{
                 return T2FS_SUCCESS;
@@ -214,7 +215,7 @@ int TR_allocateNewDirectoryBlock(Record* this, BYTE* block, DWORD* blockAddress)
             if (TR_allocateNewIndirectionBlock(indirectionBlockMem, &indirectionBlockAddress) == TR_SUCCESS){
                 this->singleIndPtr = indirectionBlockAddress;
                 //Write to disc the new indirection block just created
-                if (DAM_write(this->singleIndPtr, indirectionBlockMem) != 0){
+                if (DAM_write(this->singleIndPtr, indirectionBlockMem, FALSE) != 0){
                     return T2FS_IOERROR;
                 }
             }else{
@@ -222,7 +223,7 @@ int TR_allocateNewDirectoryBlock(Record* this, BYTE* block, DWORD* blockAddress)
             }
         }else{
             //Read the single indirection pointer
-            if (DAM_read(this->singleIndPtr, indirectionBlockMem) != 0){
+            if (DAM_read(this->singleIndPtr, indirectionBlockMem, FALSE) != 0){
                 return T2FS_IOERROR;
             }
         }
@@ -240,7 +241,7 @@ int TR_allocateNewDirectoryBlock(Record* this, BYTE* block, DWORD* blockAddress)
                 //updates data pointer with new block address
                 singleIndirectionBlock.dataPtr[writtenPos] = *blockAddress;
                 //Saves modification to disc
-                if (DAM_write(*blockAddress, block) != 0){
+                if (DAM_write(*blockAddress, block, FALSE) != 0){
                     return T2FS_IOERROR;
                 }else{
                     return T2FS_SUCCESS;
@@ -259,7 +260,7 @@ int TR_allocateNewDirectoryBlock(Record* this, BYTE* block, DWORD* blockAddress)
                 if(TR_allocateNewIndirectionBlock(indirectionBlockMem, &indirectionBlockAddress) == TR_SUCCESS){
                     this->doubleIndPtr = indirectionBlockAddress;
                     //Write to disc the new indirection block just created
-                    if (DAM_write(this->doubleIndPtr, indirectionBlockMem) != 0){
+                    if (DAM_write(this->doubleIndPtr, indirectionBlockMem, FALSE) != 0){
                         return T2FS_IOERROR;
                     }
                 }else{
@@ -267,7 +268,7 @@ int TR_allocateNewDirectoryBlock(Record* this, BYTE* block, DWORD* blockAddress)
                 }
             }else{
                 //Read the single indirection pointer
-                if (DAM_read(this->doubleIndPtr, indirectionBlockMem) != 0){
+                if (DAM_read(this->doubleIndPtr, indirectionBlockMem, FALSE) != 0){
                     return T2FS_IOERROR;
                 }
             }
@@ -276,7 +277,7 @@ int TR_allocateNewDirectoryBlock(Record* this, BYTE* block, DWORD* blockAddress)
             IB_IndirectionBlock(&doubleIndirectionBlock, indirectionBlockMem);
             if (IB_allocateNewDirectoryBlock(&doubleIndirectionBlock, 2, block, blockAddress) >= 0){ //Success
                 //Write to disc the new indirection block just created
-                if (DAM_write(this->doubleIndPtr, indirectionBlockMem) != 0){
+                if (DAM_write(this->doubleIndPtr, indirectionBlockMem, FALSE) != 0){
                     return T2FS_IOERROR;
                 }else{
                     return T2FS_SUCCESS;
@@ -296,7 +297,7 @@ int TR_allocateNewIndirectionBlock(BYTE* indirectionBlockMem, DWORD* indirection
         //Initialize block with null pointers
         memset(indirectionBlockMem, FS_NULL_BLOCK_POINTER, fileSystem.superBlock.BlockSize);
 
-        if (!DAM_write(*indirectionBlockAddress, indirectionBlockMem)){
+        if (!DAM_write(*indirectionBlockAddress, indirectionBlockMem, FALSE)){
             return T2FS_SUCCESS;
         }else{
             return T2FS_IOERROR;
@@ -360,14 +361,14 @@ int TR_findBlockByNumber(Record* this, DWORD number, BYTE* block, DWORD* blockAd
         
         *blockAddress = this->dataPtr[number];
         // Read the desired block
-        returnCode =  DAM_read(this->dataPtr[number], block);
+        returnCode =  DAM_read(this->dataPtr[number], block, FALSE);
     }
     // subtract the number of dataPtr in the record from the "number" and check
     // if the block is in the first indirection pointer
     else if ((number -= TR_DATAPTRS_IN_RECORD) < numOfPointersInBlock) {
         
         // Read the single indirection block
-        if ((returnCode = DAM_read(this->singleIndPtr, block)) == 0) {
+        if ((returnCode = DAM_read(this->singleIndPtr, block, FALSE)) == 0) {
 
             IndirectionBlock indirectionBlock;
             IB_IndirectionBlock(&indirectionBlock, block);
@@ -380,7 +381,7 @@ int TR_findBlockByNumber(Record* this, DWORD number, BYTE* block, DWORD* blockAd
     else if ((number -= numOfPointersInBlock) < numOfPointersInIndirectionBlock) {
         
         // Read the double indirection block
-        if ((returnCode = DAM_read(this->doubleIndPtr, block)) == 0) {
+        if ((returnCode = DAM_read(this->doubleIndPtr, block, FALSE)) == 0) {
 
             IndirectionBlock indirectionBlock;
             IB_IndirectionBlock(&indirectionBlock, block);

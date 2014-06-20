@@ -30,7 +30,7 @@ Record* IB_find(IndirectionBlock* this, char* name, int level, BYTE* block, DWOR
         for(i = 0; i < numOfPointersInBlock(fileSystem.superBlock.BlockSize); i++){
             //Reads one single indirection block
             BYTE blockOfIndirection[fileSystem.superBlock.BlockSize];
-            if (!DAM_read(this->dataPtr[i], blockOfIndirection)){
+            if (!DAM_read(this->dataPtr[i], blockOfIndirection, FALSE)){
 
                 IndirectionBlock indirectionBlock;
                 IB_IndirectionBlock(&indirectionBlock, blockOfIndirection);
@@ -67,7 +67,7 @@ int IB_allocateNewDirectoryBlock(IndirectionBlock* this, int level, BYTE* block,
                     //Initialize block with null pointers
                     memset(block, FS_NULL_BLOCK_POINTER, fileSystem.superBlock.BlockSize);
                     //Saves new block to disc
-                    if (DAM_write(*blockAddress, block) != 0){
+                    if (DAM_write(*blockAddress, block, FALSE) != 0){
                         return IB_IOERROR;
                     }
 
@@ -101,7 +101,7 @@ int IB_findBlockByNumber(IndirectionBlock* this, int level, DWORD number, BYTE* 
     if (level == 1) {
         
         *blockAddress = this->dataPtr[number];
-        returnCode = DAM_read(this->dataPtr[number], block);
+        returnCode = DAM_read(this->dataPtr[number], block, FALSE);
     } else if (level == 2) {
         
         unsigned int numOfPointersInBlock = numOfPointersInBlock(fileSystem.superBlock.BlockSize);
@@ -110,7 +110,7 @@ int IB_findBlockByNumber(IndirectionBlock* this, int level, DWORD number, BYTE* 
         unsigned int numberInIndirectionPointer = number % numOfPointersInIndirectionBlock;
         
         // Read the single indirection block
-        if ((returnCode = DAM_read(this->dataPtr[singleIndPointerNumber], block)) == 0) {
+        if ((returnCode = DAM_read(this->dataPtr[singleIndPointerNumber], block, FALSE)) == 0) {
 
             IndirectionBlock indirectionBlock;
             IB_IndirectionBlock(&indirectionBlock, block);
@@ -145,7 +145,7 @@ int IB_freeBlocks(IndirectionBlock* this, int level)
             
             // Read the single indirection block
             if (this->dataPtr[i] != FS_NULL_BLOCK_POINTER) {
-                if ((returnCode = DAM_read(this->dataPtr[i], block)) == 0) {
+                if ((returnCode = DAM_read(this->dataPtr[i], block, FALSE)) == 0) {
 
                     IndirectionBlock indirectionBlock;
                     IB_IndirectionBlock(&indirectionBlock, block);

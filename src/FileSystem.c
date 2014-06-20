@@ -14,7 +14,7 @@ FileSystem fileSystem;
 
 int FS_initilize(){
     fileSystem.SUPERBLOCK_ADDRESS = FS_SUPERBLOCK_ADDRESS;
-    if (DAM_read(fileSystem.SUPERBLOCK_ADDRESS, (BYTE*)(&fileSystem.superBlock)) == 0){
+    if (DAM_read(fileSystem.SUPERBLOCK_ADDRESS, (BYTE*)(&fileSystem.superBlock), TRUE) == 0){
         //Initialize with certain values, so that create handle won't mess things up
         memset(fileSystem.openRecords, TYPEVAL_INVALIDO, FS_OPENRECORDS_MAXSIZE);
         memset(fileSystem.openFiles, -1, FS_OPENFILES_MAXSIZE);
@@ -54,11 +54,11 @@ t2fs_file FS_create(FilePath* const filePath)
         if (addRecordSignal == TR_RECORD_MODIFIED){
             //If modified a directory and it is not the root directory
             if (parentBlock != NULL){
-                writingSignal = DAM_write(parentOpenRecord.blockAddress, parentBlock);
+                writingSignal = DAM_write(parentOpenRecord.blockAddress, parentBlock, FALSE);
             }else{
                 //If modified the root directory then save it. Actually save the superblock that has the root directory
                 //Supose SuperBlock doesn't have alligment paddings, i.e., sizeof(SuperBlock) <= SuperBlock.SuperBlockSize
-                writingSignal = DAM_write(FS_SUPERBLOCK_ADDRESS, (BYTE*)&fileSystem.superBlock);
+                writingSignal = DAM_write(FS_SUPERBLOCK_ADDRESS, (BYTE*)&fileSystem.superBlock, TRUE);
             }
             if (writingSignal != 0){
                 addRecordSignal = TR_FAIL;
@@ -158,7 +158,7 @@ Record* FS_findRecordInArray(DWORD dataPtr[], BYTE* block, DWORD* blockAddress, 
     int i;
 	for (i = 0; i < count; i++){
         //Read this block from the disc
-        if (!DAM_read(dataPtr[i], block)){
+        if (!DAM_read(dataPtr[i], block, FALSE)){
             
             DirectoryBlock directoryBlock;
             DB_DirectoryBlock(&directoryBlock, block);
@@ -265,13 +265,14 @@ int FS_delete(FilePath* const filePath)
                 
                 // if no error happened, then save the modified block (may be the superblock as well)
                 if (returnCode == 0) {
-                    
-                    returnCode = DAM_write(blockAddressTrace[i], blockTrace[i]);
+                    // FIXME- SEND TRUE IF IS THE SUPERBLOCK
+                    returnCode = DAM_write(blockAddressTrace[i], blockTrace[i], FALSE);
                 }
             }
         } else {
             
-            returnCode = DAM_write(targetOpenRecord.blockAddress, targetBlock);
+            // FIXME- SEND TRUE IF IS THE SUPERBLOCK
+            returnCode = DAM_write(targetOpenRecord.blockAddress, targetBlock, TRUE);
         }
     }
     

@@ -5,17 +5,17 @@
 
 extern FileSystem fileSystem;
 
-int DAM_write(DWORD blockAddress, BYTE* data)
+int DAM_write(DWORD blockAddress, BYTE* data, BOOL isSuperBlock)
 {
     int successCode = 0;
     if (blockAddress != FS_NULL_BLOCK_POINTER) {
         unsigned int sector, numOfSectors;
-        if (blockAddress == FS_SUPERBLOCK_ADDRESS) {
+        if (isSuperBlock) {
             numOfSectors = fileSystem.superBlock.SuperBlockSize;
             sector = FS_SUPERBLOCK_ADDRESS;
         } else {
             numOfSectors = fileSystem.superBlock.BlockSize / BYTES_PER_SECTOR;
-            sector = (blockAddress / numOfSectors) + fileSystem.superBlock.SuperBlockSize;
+            sector = (blockAddress * numOfSectors) + fileSystem.superBlock.SuperBlockSize;
         }
 
         for (; numOfSectors>0; numOfSectors--) {
@@ -34,17 +34,17 @@ int DAM_write(DWORD blockAddress, BYTE* data)
     return successCode;
 }
 
-int DAM_read(DWORD blockAddress, BYTE* data)
+int DAM_read(DWORD blockAddress, BYTE* data, BOOL isSuperBlock)
 {
     int successCode = 0;
     if (blockAddress != FS_NULL_BLOCK_POINTER) {
         unsigned int sector, numOfSectors;
-        if (blockAddress == FS_SUPERBLOCK_ADDRESS) {
+        if (isSuperBlock) {
             numOfSectors = sizeof(SuperBlock) / BYTES_PER_SECTOR;
             sector = FS_SUPERBLOCK_ADDRESS;
         } else {
             numOfSectors = fileSystem.superBlock.BlockSize / BYTES_PER_SECTOR;
-            sector = (blockAddress / numOfSectors) + fileSystem.superBlock.SuperBlockSize;
+            sector = (blockAddress * numOfSectors) + fileSystem.superBlock.SuperBlockSize;
         }
 
         int successCode = 0;

@@ -33,7 +33,7 @@ int FSM_delete(DWORD address)
         // set to zero the correspondent bit of the bitmap for this address
         block[byteOffsetInBlock] &= ~(0x80 >> bitOffsetInByte);
 
-        returnCode = DAM_write(blockAddress, block);
+        returnCode = DAM_write(blockAddress, block, FALSE);
     }
     
     return returnCode;
@@ -109,7 +109,7 @@ int FSM_markAsUsed(DWORD address)
         // set to 1 the correspondent bit of the bitmap for this address
         block[byteOffsetInBlock] |= 0x80 >> bitOffsetInByte;
 
-        returnCode = DAM_write(blockAddress, block);
+        returnCode = DAM_write(blockAddress, block, FALSE);
     }
     
     return returnCode;

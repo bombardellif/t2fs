@@ -2,9 +2,8 @@
  * File:   FilePathTest.c
  * Author: fernando
  *
- * Created on 19.06.2014, 13:48:15
+ * Created on 19.06.2014, 22:14:09
  */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
