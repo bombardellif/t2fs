@@ -3,6 +3,7 @@
 #include "FileSystem.h"
 #include "DiscAccessManager.h"
 #include "t2fs_record.h"
+#include "apidisk.h"
 
 #include <assert.h>
 #include <string.h>
@@ -61,20 +62,18 @@ int FSM_getFreeAddress(DWORD* address)
             // then there is a free space here!
             if (fullBytesInBlock != fileSystem.superBlock.BlockSize) {
                 
-                // Address calc Level 1: number of full blocks in the bitmap
-                *address = blockNumberInBitmapFile * fileSystem.superBlock.BlockSize;
+                // Address calc: number of bits search until here
+                *address = ((blockNumberInBitmapFile * fileSystem.superBlock.BlockSize)
+                            + fullBytesInBlock) * FSM_BITS_PER_BYTE;
                 
-                // Address calc Level 2: number of full bytes in the block
-                *address += fullBytesInBlock;
-                
-                // Address calc Level 3: the first free bit in the bytes
-                unsigned short bitMask = 0xFE; // 11111110
+                // The first free bit in the bytes
+                BYTE bitMask = 0xFE; // 11111110
                 unsigned short bitOffsetInByte;
                 for (bitOffsetInByte=0; bitOffsetInByte<FSM_BITS_PER_BYTE; bitOffsetInByte++) {
                     
                     // if the OR operation with the mask results in something different of 0XFF,
                     // then the current iteration indicates the free bit in the byte
-                    if ((block[fullBytesInBlock] | bitMask) != 0XFF) {
+                    if (((BYTE)(block[fullBytesInBlock] | bitMask)) != 0XFF) {
                         break;
                     }
                     bitMask <<= 1;

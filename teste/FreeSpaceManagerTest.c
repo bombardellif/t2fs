@@ -19,7 +19,7 @@ extern FileSystem fileSystem;
 
 void testGetFreeAddress1() {
     printf("FreeSpaceManagerTest test 1\n");
-    FS_initilize();
+    
     DWORD address, newAddress;
     ////Supose there is enough free space in disc
     if (FSM_getFreeAddress(&address) == 0){
@@ -95,9 +95,9 @@ int main(int argc, char** argv) {
         testGetFreeAddress1();
         printf("%%TEST_FINISHED%% time=0 testGetFreeAddress1 (FreeSpaceManagerTest) \n");
 
-        printf("%%TEST_STARTED%% testGetFreeAddress2 (FreeSpaceManagerTest)\n");
+        /*printf("%%TEST_STARTED%% testGetFreeAddress2 (FreeSpaceManagerTest)\n");
         testGetFreeAddress2();
-        printf("%%TEST_FINISHED%% time=0 testGetFreeAddress2 (FreeSpaceManagerTest) \n");
+        printf("%%TEST_FINISHED%% time=0 testGetFreeAddress2 (FreeSpaceManagerTest) \n");*/
 
         printf("%%SUITE_FINISHED%% time=0\n");
 
