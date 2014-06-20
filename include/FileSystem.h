@@ -28,10 +28,10 @@ typedef struct s_FileSystem{
 	DWORD SUPERBLOCK_ADDRESS;
 } FileSystem;
 
+int FS_initilize();
 t2fs_file FS_create(FilePath* const filePath);
 t2fs_file FS_createHandle(OpenRecord openRecord);
 Record* FS_findRecordInArray(DWORD dataPtr[], BYTE* block, DWORD* blockAddress, Record*(*find)(const DirectoryBlock* const,const char* param), char* name, int count);
-int FS_findEmptyInArray(DWORD dataPtr[], BYTE* block, DWORD* blockAddress, int count);
 int FS_delete(FilePath* const filePath);
 t2fs_file FS_open(FilePath* const filePath);
 #endif

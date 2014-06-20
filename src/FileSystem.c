@@ -12,6 +12,14 @@ FileSystem fileSystem;
 #define numOfPointersInBlock(blockSize)     (blockSize / sizeof(DWORD))
 #define numOfEntriesInBlock(blockSize)      (blockSize / sizeof(Record))
 
+int FS_initilize(){
+    fileSystem.SUPERBLOCK_ADDRESS = FS_SUPERBLOCK_ADDRESS;
+    DAM_read(fileSystem.SUPERBLOCK_ADDRESS, (BYTE*)(&fileSystem.superBlock));
+    //Initialize with certain values, so that create handle won't mess things up
+    memset(fileSystem.openRecords, TYPEVAL_INVALIDO, FS_OPENRECORDS_MAXSIZE);
+    memset(fileSystem.openFiles, -1, FS_OPENFILES_MAXSIZE);    
+}
+
 t2fs_file FS_create(FilePath* const filePath)
 {
     if (filePath == NULL){
@@ -162,11 +170,6 @@ Record* FS_findRecordInArray(DWORD dataPtr[], BYTE* block, DWORD* blockAddress, 
     }
     //Did not find any record with this file name
     return NULL;
-}
-
-int FS_findEmptyInArray(DWORD dataPtr[], BYTE* block, DWORD* blockAddress, int count)
-{
-	return 0;
 }
 
 int FS_delete(FilePath* const filePath)

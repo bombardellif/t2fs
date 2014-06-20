@@ -9,7 +9,6 @@ typedef struct s_OpenRecord{
 	unsigned int count;
 } OpenRecord;
 
-void OR_incCount(OpenRecord* this);
 BOOL OR_equals(const OpenRecord* const this, const OpenRecord other);
 
 #endif

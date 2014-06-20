@@ -54,7 +54,7 @@ int IB_allocateNewDirectoryBlock(IndirectionBlock* this, int level, BYTE* block,
         return IB_INVALID_ARGUMENT;
     
     if (level == 2){
-        int writtenPos = TR_findEmptyPositionInArray(this->dataPtr, fileSystem.superBlock.BlockSize / sizeof(DWORD));
+        int writtenPos = TR_findEmptyPositionInArray(this->dataPtr, numOfPointersInBlock(fileSystem.superBlock.BlockSize));
         
         if (writtenPos >= 0){
             //Create new indirection block (child), which will be updated in fact

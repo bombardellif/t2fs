@@ -40,7 +40,7 @@ int DAM_read(DWORD blockAddress, BYTE* data)
     if (blockAddress != FS_NULL_BLOCK_POINTER) {
         unsigned int sector, numOfSectors;
         if (blockAddress == FS_SUPERBLOCK_ADDRESS) {
-            numOfSectors = fileSystem.superBlock.SuperBlockSize;
+            numOfSectors = sizeof(SuperBlock) / BYTES_PER_SECTOR;
             sector = FS_SUPERBLOCK_ADDRESS;
         } else {
             numOfSectors = fileSystem.superBlock.BlockSize / BYTES_PER_SECTOR;

@@ -10,6 +10,9 @@
 
 extern FileSystem fileSystem;
 
+#define numOfPointersInBlock(blockSize)     (blockSize / sizeof(DWORD))
+#define numOfEntriesInBlock(blockSize)      (blockSize / sizeof(Record))
+
 void TR_Record(Record* this, BYTE typeVal, char* name, DWORD blocksFileSize, DWORD bytesFileSize)
 {
     strncpy(this->name, name, TR_FILENAME_MAXSIZE);
@@ -227,7 +230,7 @@ int TR_allocateNewDirectoryBlock(Record* this, BYTE* block, DWORD* blockAddress)
         IndirectionBlock singleIndirectionBlock;
         IB_IndirectionBlock(&singleIndirectionBlock, indirectionBlockMem);
         
-        writtenPos = TR_findEmptyPositionInArray(singleIndirectionBlock.dataPtr, fileSystem.superBlock.BlockSize / sizeof(DWORD));
+        writtenPos = TR_findEmptyPositionInArray(singleIndirectionBlock.dataPtr, numOfEntriesInBlock(fileSystem.superBlock.BlockSize));
         
         if (writtenPos >= 0){
             //If found an empty space in this single indirection pointer
@@ -349,7 +352,7 @@ int TR_findBlockByNumber(Record* this, DWORD number, BYTE* block, DWORD* blockAd
         return T2FS_ADDRECORD_INVALID_ARGUMENT;
     
     int returnCode;
-    unsigned int numOfPointersInBlock = fileSystem.superBlock.BlockSize / sizeof(DWORD);
+    unsigned int numOfPointersInBlock = numOfPointersInBlock(fileSystem.superBlock.BlockSize);
     unsigned int numOfPointersInIndirectionBlock = numOfPointersInBlock * numOfPointersInBlock;
     
     // if the block is in the direct pointers

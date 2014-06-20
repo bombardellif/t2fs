@@ -20,17 +20,18 @@ int DAM_read(DWORD blockAddress, BYTE* data);
 void testDAM_read() {
     DWORD blockAddress;
     SuperBlock sb;
+    FS_initilize();
     
     blockAddress = FS_SUPERBLOCK_ADDRESS;
-    int result = DAM_read(blockAddress, &sb);
+    int result = DAM_read(blockAddress, (BYTE*)(&sb));
     
-    if (result) {
-        printf("Id: \t%c%c%c%c", sb.Id[0],sb.Id[1],sb.Id[2],sb.Id[3]);
-        printf("Version: \t%ui", sb.Version);
-        printf("SB Size: \t%ui", sb.SuperBlockSize);
-        printf("Disc Size: \t%ui", sb.DiskSize);
-        printf("No Blocks: \t%ui", sb.NofBlocks);
-        printf("Block Size: \t%ui", sb.BlockSize);
+    if (!result) {
+        printf("Id: \t%c%c%c%c\n", sb.Id[0],sb.Id[1],sb.Id[2],sb.Id[3]);
+        printf("Version: \t%u\n", sb.Version);
+        printf("SB Size: \t%u\n", sb.SuperBlockSize);
+        printf("Disc Size: \t%u\n", sb.DiskSize);
+        printf("No Blocks: \t%u\n", sb.NofBlocks);
+        printf("Block Size: \t%u\n", sb.BlockSize);
     } else {
         printf("%%TEST_FAILED%% time=0 testname=testDAM_read (DiscAccessManagerTest) message=error message sample\n");
     }
