@@ -20,7 +20,8 @@ Record* DB_findByName(const DirectoryBlock* const this, const char* name)
         return NULL;
 	unsigned int count = numOfEntriesInBlock(fileSystem.superBlock.BlockSize);
     for (int i=0; i < count; i++) {
-        if (strcmp(this->entries[i].name, name) == 0) {
+        if ((this->entries[i].TypeVal == TYPEVAL_DIRETORIO || this->entries[i].TypeVal == TYPEVAL_REGULAR)
+        && (strcmp(this->entries[i].name, name) == 0)) {
             return & this->entries[i];
         }
     }

@@ -20,7 +20,8 @@
 
 #define FS_OPENFILES_MAXSIZE 20
 #define FS_OPENRECORDS_MAXSIZE 20
-#define FS_MAX_TRACE_DEPTH 4
+#define FS_TRACE_DEPTH_LENGTH 4
+#define FS_BLOCK_TRACE_DEPTH_LENGTH 3
 
 typedef struct s_FileSystem{
 	SuperBlock superBlock;
@@ -32,7 +33,7 @@ typedef struct s_FileSystem{
 int FS_initilize();
 t2fs_file FS_create(FilePath* const filePath);
 t2fs_file FS_createHandle(OpenRecord openRecord);
-Record* FS_findRecordInArray(DWORD dataPtr[], BYTE* block, DWORD* blockAddress, Record*(*find)(const DirectoryBlock* const,const char* param), char* name, int count);
+Record* FS_findRecordInArray(DWORD dataPtr[], BYTE* block, DWORD* blockAddress, Record*(*find)(const DirectoryBlock* const,const char* param), char* name, int count, int* indexFound);
 int FS_delete(FilePath* const filePath);
 t2fs_file FS_open(FilePath* const filePath);
 #endif

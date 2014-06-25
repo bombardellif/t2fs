@@ -38,7 +38,7 @@ t2fs_file FS_create(FilePath* const filePath)
     BYTE parentBlock[fileSystem.superBlock.BlockSize];
     
     //Find parent, starting from the root
-    Record* parentRecord = TR_find(&fileSystem.superBlock.RootDirReg, &dirPath, &parentOpenRecord, parentBlock, DB_findByName, NULL, NULL, NULL);
+    Record* parentRecord = TR_find(&fileSystem.superBlock.RootDirReg, &dirPath, &parentOpenRecord, parentBlock, DB_findByName, NULL, NULL);
     FP_destroy(&dirPath);
     
     if (parentRecord != NULL){
@@ -53,7 +53,7 @@ t2fs_file FS_create(FilePath* const filePath)
         int writingSignal;
         if (addRecordSignal == T2FS_RECORD_MODIFIED){
             //If modified a directory and it is not the root directory
-            if (parentBlock != NULL){
+            if (parentRecord != &fileSystem.superBlock.RootDirReg){
                 writingSignal = DAM_write(parentOpenRecord.blockAddress, parentBlock, FALSE);
             }else{
                 //If modified the root directory then save it. Actually save the superblock that has the root directory
@@ -149,7 +149,7 @@ t2fs_file FS_createHandle(OpenRecord openRecord)
     }
 }
 
-Record* FS_findRecordInArray(DWORD dataPtr[], BYTE* block, DWORD* blockAddress, Record*(*find)(const DirectoryBlock* const,const char* param), char* name, int count)
+Record* FS_findRecordInArray(DWORD dataPtr[], BYTE* block, DWORD* blockAddress, Record*(*find)(const DirectoryBlock* const,const char* param), char* name, int count, int* indexFound)
 {
     if (count <= 0 || dataPtr == NULL)
         return NULL;
@@ -167,6 +167,8 @@ Record* FS_findRecordInArray(DWORD dataPtr[], BYTE* block, DWORD* blockAddress, 
             
             if (foundRecord != NULL){
                 *blockAddress = dataPtr[i];
+                if (indexFound)
+                    *indexFound = i;
                 return foundRecord;
             }
         }
@@ -185,95 +187,108 @@ int FS_delete(FilePath* const filePath)
     int returnCode;
     OpenRecord targetOpenRecord;
     BYTE targetBlock[fileSystem.superBlock.BlockSize];
-    BYTE blockTrace[FS_MAX_TRACE_DEPTH][fileSystem.superBlock.BlockSize];
-    DWORD* recordPointerTrace[FS_MAX_TRACE_DEPTH];
-    DWORD blockAddressTrace[FS_MAX_TRACE_DEPTH];
+    BYTE blockTrace[FS_BLOCK_TRACE_DEPTH_LENGTH][fileSystem.superBlock.BlockSize];
+    DWORD* blockAddressTrace[FS_TRACE_DEPTH_LENGTH];
+    DWORD traceRootIndicator = FS_NULL_BLOCK_POINTER;
+    
+    // Initialize trace (FS_NULL_BLOCK_POINTER indicates that first block is the superblock)
+    blockAddressTrace[0] = &traceRootIndicator;
     
     //Find parent, starting from the root
-    Record* targetRecord = TR_find(&fileSystem.superBlock.RootDirReg, filePath, &targetOpenRecord, targetBlock, DB_findByName, blockTrace, recordPointerTrace, blockAddressTrace);
+    Record* targetRecord = TR_find(&fileSystem.superBlock.RootDirReg, filePath, &targetOpenRecord, targetBlock, DB_findByName, blockTrace, blockAddressTrace);
     
-    // Check for errors from TR_find
-    
-    // if it is a directory, it must be empty
-    if ((targetRecord->TypeVal == TYPEVAL_DIRETORIO)) {
-        
-        for (int i=0; i<TR_DATAPTRS_IN_RECORD ; i++) {
-            if (targetRecord->dataPtr[i] != FS_NULL_BLOCK_POINTER) {
+    if (targetRecord) {
+        // if it is a directory, it must be empty
+        if ((targetRecord->TypeVal == TYPEVAL_DIRETORIO)) {
+
+            for (int i=0; i<TR_DATAPTRS_IN_RECORD ; i++) {
+                if (targetRecord->dataPtr[i] != FS_NULL_BLOCK_POINTER) {
+                    returnCode = FS_DELETEPROBLEM_DIRECTORY_NOT_EMPTY;
+                    break;
+                }
+            }
+
+            if ((returnCode == 0)
+            && ((targetRecord->singleIndPtr != FS_NULL_BLOCK_POINTER)
+                || (targetRecord->doubleIndPtr != FS_NULL_BLOCK_POINTER))
+            ) {
                 returnCode = FS_DELETEPROBLEM_DIRECTORY_NOT_EMPTY;
-                break;
             }
+
+        } else {
+        // if it is a regular file, free its blocks
+            returnCode = TR_freeBlocks(targetRecord);
         }
-        
-        if ((returnCode == 0)
-        && ((targetRecord->singleIndPtr != FS_NULL_BLOCK_POINTER)
-            || (targetRecord->doubleIndPtr != FS_NULL_BLOCK_POINTER))
-        ) {
-            returnCode = FS_DELETEPROBLEM_DIRECTORY_NOT_EMPTY;
-        }
-        
-    } else {
-    // if it is a regular file, free its blocks
-        returnCode = TR_freeBlocks(targetRecord);
-    }
-    
-    // if not a problem yet ...
-    if (returnCode == 0) {
-        targetRecord->TypeVal = TYPEVAL_INVALIDO;
-        
-        unsigned int numOfEntriesInBlock = numOfEntriesInBlock(fileSystem.superBlock.BlockSize);
-        unsigned int numOfPointersInBlock = numOfPointersInBlock(fileSystem.superBlock.BlockSize);
-        
-        // chech if the block where is this directory entry is now empty
-        DirectoryBlock dirBlock;
-        DB_DirectoryBlock(&dirBlock, targetBlock);
-        int i;
-        for (i=0; i<numOfEntriesInBlock; i++) {
-            if (dirBlock.entries[i].TypeVal != TYPEVAL_INVALIDO) {
-                break;
+
+        // if not a problem yet ...
+        if (returnCode == 0) {
+            targetRecord->TypeVal = TYPEVAL_INVALIDO;
+
+            unsigned int numOfEntriesInBlock = numOfEntriesInBlock(fileSystem.superBlock.BlockSize);
+            unsigned int numOfPointersInBlock = numOfPointersInBlock(fileSystem.superBlock.BlockSize);
+
+            // chech if the block where is this directory entry is now empty
+            DirectoryBlock dirBlock;
+            DB_DirectoryBlock(&dirBlock, targetBlock);
+            int i;
+            for (i=0; i<numOfEntriesInBlock; i++) {
+                if ((dirBlock.entries[i].TypeVal == TYPEVAL_DIRETORIO)
+                || (dirBlock.entries[i].TypeVal == TYPEVAL_REGULAR)) {
+                    break;
+                }
             }
-        }
-        
-        // if it every entry is empty, then free this block,
-        // else, just save this block
-        if (i == numOfEntriesInBlock) {
-            if ((returnCode = FSM_delete(targetOpenRecord.blockAddress)) == 0) {
-            
-                // for each block since the entry of the directory in which this file is in,
-                // check if removing this entry will free any block, if so do it
-                for (i=FS_MAX_TRACE_DEPTH; i>=0; i--) {
-                    *recordPointerTrace[i] = FS_NULL_BLOCK_POINTER;
+
+            // if it every entry is empty, then free this block,
+            // else, just save this block
+            if (i == numOfEntriesInBlock) {
+                if ((returnCode = FSM_delete(targetOpenRecord.blockAddress)) == 0) {
+                    int j;
+                    // find the tail of the trace
+                    for (j=FS_TRACE_DEPTH_LENGTH - 1 ; (blockAddressTrace[j]==NULL) ; j--);
                     
-                    if (i != 0) {
+                    // set the pointer of the deleted block to FS_NULL_BLOCK_POINTER
+                    *blockAddressTrace[j] = FS_NULL_BLOCK_POINTER;
+                    
+                    // for each block since the entry of the directory in which this file is in,
+                    // check if removing this entry will free any block, if so do it
+                    for (--j; j>0; j--) {
                         
-                        int j;
-                        for (j=0; j<numOfPointersInBlock; j++) {
-                            if (blockTrace[i][j] != FS_NULL_BLOCK_POINTER) {
+                        // Check if the block[j] is empty (have no more valid pointers)
+                        int k;
+                        for (k=0; k<numOfPointersInBlock; k++) {
+                            if (blockTrace[j][k] != FS_NULL_BLOCK_POINTER) {
                                 break;
                             }
                         }
                         // if every pointer in this block is empty, then free it
                         // else break this loop, because there won't be any other to free
-                        if (j == numOfPointersInBlock) {
-                            if ((returnCode = FSM_delete(blockAddressTrace[i])) != 0) {
+                        if (k == numOfPointersInBlock) {
+                            if ((returnCode = FSM_delete(*blockAddressTrace[j])) != 0) {
                                 break;
                             }
+                            *blockAddressTrace[j] = FS_NULL_BLOCK_POINTER;
                         } else {
                             break;
                         }
                     }
+
+                    // if no error happened, then save the modified block (may be the superblock as well)
+                    if (returnCode == 0) {
+                        // if *blockAddressTrace[j] is FS_NULL_BLOCK_POINTER then it is to save the superblock
+                        if (*blockAddressTrace[j] == FS_NULL_BLOCK_POINTER) {
+                            returnCode = DAM_write(*blockAddressTrace[j], (BYTE*)&fileSystem.superBlock, TRUE);
+                        } else {
+                            returnCode = DAM_write(*blockAddressTrace[j], blockTrace[j], FALSE);
+                        }
+                    }
                 }
-                
-                // if no error happened, then save the modified block (may be the superblock as well)
-                if (returnCode == 0) {
-                    // FIXME- SEND TRUE IF IS THE SUPERBLOCK
-                    returnCode = DAM_write(blockAddressTrace[i], blockTrace[i], FALSE);
-                }
+            } else {
+
+                returnCode = DAM_write(targetOpenRecord.blockAddress, targetBlock, FALSE);
             }
-        } else {
-            
-            // FIXME- SEND TRUE IF IS THE SUPERBLOCK
-            returnCode = DAM_write(targetOpenRecord.blockAddress, targetBlock, TRUE);
         }
+    } else {
+        returnCode = FS_INVALID_PATH;
     }
     
     return returnCode;

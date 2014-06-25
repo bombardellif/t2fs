@@ -25,7 +25,7 @@ void TR_Record(Record* this, BYTE typeVal, char* name, DWORD blocksFileSize, DWO
     this->doubleIndPtr = FS_NULL_BLOCK_POINTER;
 }
 
-Record* TR_find(Record* this, FilePath* const filePath, OpenRecord* openRecord, BYTE* block, Record*(*find)(const DirectoryBlock* const this, const char* const notUsed), BYTE blockTrace[][FS_MAX_TRACE_DEPTH], DWORD* recordPointerTrace[], DWORD blockAddress[])
+Record* TR_find(Record* this, FilePath* const filePath, OpenRecord* openRecord, BYTE* block, Record*(*find)(const DirectoryBlock* const this, const char* const notUsed), BYTE blockTrace[][FS_BLOCK_TRACE_DEPTH_LENGTH], DWORD* blockAddressTrace[])
 {
     if (this == NULL || openRecord == NULL || block == NULL)
         return NULL;
@@ -37,14 +37,32 @@ Record* TR_find(Record* this, FilePath* const filePath, OpenRecord* openRecord, 
         return this;
     }
     
-    Record* foundRecord = TR_findRecordInRecord(this, openRecord, block, find, currentNode);
+    Record* foundRecord = TR_findRecordInRecord(this, openRecord, block, find, currentNode, blockTrace, blockAddressTrace);
     
     if (foundRecord != NULL){
         if (FP_hasNextNode(filePath)){
-            /** @TODO Keep track */
+            // Make trace[0]
+            // Copy the block of this directory entry to start a new trace of the search for records
+            if (blockTrace && blockAddressTrace) {
+                memcpy(blockTrace[0], block, sizeof(blockTrace[0]));
+                *blockAddressTrace[0] = openRecord->blockAddress;
+            }
+            
             //Keep surfing in directory until find the target
-            return TR_find(foundRecord, filePath, openRecord, block, find, NULL, NULL, NULL);
-        }else{
+            return TR_find(foundRecord, filePath, openRecord, block, find, blockTrace, blockAddressTrace);
+        } else {
+            // Make trace[3]
+            // Copy just the adress to the directory block where the target file is in (do not copy the block)
+            if (blockTrace && blockAddressTrace) {
+                // find the tail of the trace
+                int j;
+                for (j=FS_TRACE_DEPTH_LENGTH - 1 ; (blockAddressTrace[j]==NULL) ; j--);
+                
+                IndirectionBlock ibTrace;
+                IB_IndirectionBlock(&ibTrace, blockTrace[j]);
+                blockAddressTrace[j+1] = IB_findDataPtrByValue(&ibTrace, openRecord->blockAddress);
+            }
+            
             //COPY found record into openRecord
             openRecord->record = *foundRecord;
             //Can return foundRecord, because it points to an address into the "block", which is returned through argument reference
@@ -55,21 +73,37 @@ Record* TR_find(Record* this, FilePath* const filePath, OpenRecord* openRecord, 
     }
 }
 
-Record* TR_findRecordInRecord(Record* this, OpenRecord* openRecord, BYTE* block, Record*(*find)(const DirectoryBlock* const this, const char* const notUsed), char* param)
+Record* TR_findRecordInRecord(Record* this, OpenRecord* openRecord, BYTE* block, Record*(*find)(const DirectoryBlock* const this, const char* const notUsed), char* param, BYTE blockTrace[][FS_BLOCK_TRACE_DEPTH_LENGTH], DWORD* blockAddressTrace[])
 {
+    int indexFound;
     Record* foundRecord;
     //First try to find in the dataPtrs of this record
-    foundRecord = FS_findRecordInArray(this->dataPtr, block, &openRecord->blockAddress, find, param, TR_DATAPTRS_IN_RECORD);
+    foundRecord = FS_findRecordInArray(this->dataPtr, block, &openRecord->blockAddress, find, param, TR_DATAPTRS_IN_RECORD, &indexFound);
+    
+    // Anula trace[2] e trace[3] (se encontrou)
+    if (foundRecord && blockAddressTrace && blockTrace) {
+        blockAddressTrace[1] = &this->dataPtr[indexFound];
+        blockAddressTrace[2] = blockAddressTrace[3] = NULL;
+    }
     
     //If did not find, searches through Single Indirection Pointer
     if (foundRecord == NULL){
         BYTE blockOfIndirection[fileSystem.superBlock.BlockSize];
         if (!DAM_read(this->singleIndPtr, blockOfIndirection, FALSE)){
         
+            // Make trace[1] - null trace[2] and trace[3]
+            if (blockAddressTrace && blockTrace) {
+                memcpy(blockTrace[1], blockOfIndirection, sizeof(blockTrace[1]));
+                IndirectionBlock ibTrace;
+                IB_IndirectionBlock(&ibTrace, blockTrace[0]);
+                blockAddressTrace[1] = IB_findDataPtrByValue(&ibTrace, this->singleIndPtr);
+                blockAddressTrace[2] = blockAddressTrace[3] = NULL;
+            }
+            
             IndirectionBlock indirectionBlock;
             IB_IndirectionBlock(&indirectionBlock, blockOfIndirection);
 
-            foundRecord = IB_find(&indirectionBlock, param, 1, block, &(openRecord->blockAddress), find);
+            foundRecord = IB_find(&indirectionBlock, param, 1, block, &(openRecord->blockAddress), find, blockTrace, blockAddressTrace);
         }
     }
     //If hasn't found yet, searches through Double Indirection Pointer
@@ -77,10 +111,19 @@ Record* TR_findRecordInRecord(Record* this, OpenRecord* openRecord, BYTE* block,
         BYTE blockOfIndirection[fileSystem.superBlock.BlockSize];
         if (!DAM_read(this->doubleIndPtr, blockOfIndirection, FALSE)){
         
+            // Make trace[1] - null trace[2] and trace[3]
+            if (blockAddressTrace && blockTrace) {
+                memcpy(blockTrace[1], blockOfIndirection, sizeof(blockTrace[1]));
+                IndirectionBlock ibTrace;
+                IB_IndirectionBlock(&ibTrace, blockTrace[0]);
+                blockAddressTrace[1] = IB_findDataPtrByValue(&ibTrace, this->doubleIndPtr);
+                blockAddressTrace[2] = blockAddressTrace[3] = NULL;
+            }
+            
             IndirectionBlock indirectionBlock;
             IB_IndirectionBlock(&indirectionBlock, blockOfIndirection);
 
-            foundRecord = IB_find(&indirectionBlock, param, 2, block, &(openRecord->blockAddress), find);
+            foundRecord = IB_find(&indirectionBlock, param, 2, block, &(openRecord->blockAddress), find, blockTrace, blockAddressTrace);
         }
     }
     return foundRecord;
@@ -99,7 +142,7 @@ int TR_addRecord(Record* this, Record newRecord, OpenRecord* newOpenRecord)
     Record* targetRecord;
     assert (fileSystem.superBlock.BlockSize > 0);
     BYTE modifiedBlock[fileSystem.superBlock.BlockSize];
-    targetRecord = TR_find(this, &filePath, newOpenRecord, modifiedBlock, DB_findByName, NULL, NULL, NULL);
+    targetRecord = TR_find(this, &filePath, newOpenRecord, modifiedBlock, DB_findByName, NULL, NULL);
     FP_destroy(&filePath);
     
     if (targetRecord != NULL){
@@ -108,7 +151,7 @@ int TR_addRecord(Record* this, Record newRecord, OpenRecord* newOpenRecord)
     }else{
         //Didn't find, then look for an empty entry in the directory
         assert(modifiedBlock != NULL);
-        targetRecord = TR_findRecordInRecord(this, newOpenRecord, modifiedBlock, DB_findEmpty, NULL);
+        targetRecord = TR_findRecordInRecord(this, newOpenRecord, modifiedBlock, DB_findEmpty, NULL, NULL, NULL);
         
         //If did not find an empty entry, then create one
         if (targetRecord == NULL){
@@ -142,8 +185,8 @@ int TR_freeBlocks(Record* this)
     if (this == NULL || this->TypeVal != TYPEVAL_REGULAR)
         return T2FS_INVALID_ARGUMENT;
     
-    BYTE block;
-    int returnCode;
+    BYTE block[fileSystem.superBlock.BlockSize];
+    int returnCode = 0;
     
     // direct blocks
     for (int i=0; i<TR_DATAPTRS_IN_RECORD; i++) {
@@ -158,26 +201,28 @@ int TR_freeBlocks(Record* this)
     // 1 level blocks
     if ((returnCode == 0) && (this->singleIndPtr != FS_NULL_BLOCK_POINTER)) {
         // Read the single indirection block
-        if ((returnCode = DAM_read(this->singleIndPtr, &block, FALSE)) == 0) {
+        if ((returnCode = DAM_read(this->singleIndPtr, block, FALSE)) == 0) {
 
             IndirectionBlock indirectionBlock;
-            IB_IndirectionBlock(&indirectionBlock, &block);
+            IB_IndirectionBlock(&indirectionBlock, block);
             
-            returnCode = IB_freeBlocks(&indirectionBlock, 1);
+            if ((returnCode = IB_freeBlocks(&indirectionBlock, 1)) == 0) {
+                this->singleIndPtr = FS_NULL_BLOCK_POINTER;
+            }
         }
-        this->singleIndPtr = FS_NULL_BLOCK_POINTER;
     }
     // 2 level blocks
     if ((returnCode == 0) && (this->doubleIndPtr != FS_NULL_BLOCK_POINTER)) {
         // Read the double indirection block
-        if ((returnCode = DAM_read(this->doubleIndPtr, &block, FALSE)) == 0) {
+        if ((returnCode = DAM_read(this->doubleIndPtr, block, FALSE)) == 0) {
 
             IndirectionBlock indirectionBlock;
-            IB_IndirectionBlock(&indirectionBlock, &block);
+            IB_IndirectionBlock(&indirectionBlock, block);
             
-            returnCode = IB_freeBlocks(&indirectionBlock, 2);
+            if ((returnCode = IB_freeBlocks(&indirectionBlock, 2)) == 0) {
+                this->doubleIndPtr = FS_NULL_BLOCK_POINTER;
+            }
         }
-        this->doubleIndPtr = FS_NULL_BLOCK_POINTER;
     }
     
     return returnCode;

@@ -21,7 +21,7 @@ void testFS_create() {
     FP_FilePath(&filePath, path);
     
     t2fs_file result = FS_create(&filePath);
-    if (result < 0) {
+    if (result != 0) {
         printf("%%TEST_FAILED%% time=0 testname=testFS_create (FileSystemTest) message=%d\n", result);
     }
 }
@@ -35,10 +35,43 @@ void testFS_createHandle() {
 }
 
 void testFS_delete() {
-    FilePath * const filePath;
-    int result = FS_delete(filePath);
-    if (1 /*check result*/) {
-        printf("%%TEST_FAILED%% time=0 testname=testFS_delete (FileSystemTest) message=error message sample\n");
+    FS_initilize();
+    
+    FilePath filePath;
+    char path[] = "/dir1";
+    FP_FilePath(&filePath, path);
+    int result = FS_delete(&filePath);
+    FP_destroy(&filePath);
+    
+    if (result != 0) {
+        printf("%%TEST_FAILED%% time=0 testname=testFS_delete (FileSystemTest) message=/dir1\n");
+    }
+    
+    char path2[] = "/teste1";
+    FP_FilePath(&filePath, path2);
+    result = FS_delete(&filePath);
+    FP_destroy(&filePath);
+    
+    if (result != 0) {
+        printf("%%TEST_FAILED%% time=0 testname=testFS_delete (FileSystemTest) message=/teste1\n");
+    }
+    
+    char path3[] = "/teste2";
+    FP_FilePath(&filePath, path3);
+    result = FS_delete(&filePath);
+    FP_destroy(&filePath);
+    
+    if (result != 0) {
+        printf("%%TEST_FAILED%% time=0 testname=testFS_delete (FileSystemTest) message=/teste2\n");
+    }
+    
+    char path4[] = "/teste3";
+    FP_FilePath(&filePath, path4);
+    result = FS_delete(&filePath);
+    FP_destroy(&filePath);
+    
+    if (result != 0) {
+        printf("%%TEST_FAILED%% time=0 testname=testFS_delete (FileSystemTest) message=/teste3\n");
     }
 }
 
@@ -73,19 +106,19 @@ void testFS_open() {
 int main(int argc, char** argv) {
     printf("%%SUITE_STARTING%% FileSystemTest\n");
     printf("%%SUITE_STARTED%%\n");
-
+/*
     printf("%%TEST_STARTED%%  testFS_create (FileSystemTest)\n");
     testFS_create();
     printf("%%TEST_FINISHED%% time=0 testFS_create (FileSystemTest)\n");
-    /*
+    
     printf("%%TEST_STARTED%%  testFS_createHandle (FileSystemTest)\n");
     testFS_createHandle();
     printf("%%TEST_FINISHED%% time=0 testFS_createHandle (FileSystemTest)\n");
-
+*/
     printf("%%TEST_STARTED%%  testFS_delete (FileSystemTest)\n");
     testFS_delete();
     printf("%%TEST_FINISHED%% time=0 testFS_delete (FileSystemTest)\n");
-
+/*
     printf("%%TEST_STARTED%%  testFS_findRecordInArray (FileSystemTest)\n");
     testFS_findRecordInArray();
     printf("%%TEST_FINISHED%% time=0 testFS_findRecordInArray (FileSystemTest)\n");
