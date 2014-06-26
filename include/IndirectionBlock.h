@@ -17,7 +17,7 @@ typedef struct s_IndirectionBlock{
 void IB_IndirectionBlock(IndirectionBlock* this, BYTE* block);
 Record* IB_find(IndirectionBlock* this, char* name, int level, BYTE* block, DWORD* blockAddress, Record*(*find)(const DirectoryBlock* const, const char* param), BYTE blockTrace[][FS_BLOCK_TRACE_DEPTH_LENGTH], DWORD* blockAddressTrace[]);
 int IB_allocateNewDirectoryBlock(IndirectionBlock* this, int level, BYTE* block, DWORD* blockAddress);
-int IB_findBlockByNumber(IndirectionBlock* this, int level, DWORD number, BYTE* block, DWORD* blockAddress);
+int IB_findBlockByNumber(IndirectionBlock* this, int level, DWORD number, BYTE* block, DWORD* blockAddress, DWORD** blockAddressPtr);
 int IB_freeBlocks(IndirectionBlock* this, int level);
 DWORD* IB_findDataPtrByValue(IndirectionBlock* this, DWORD value);
 

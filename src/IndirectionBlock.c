@@ -113,13 +113,19 @@ int IB_allocateNewDirectoryBlock(IndirectionBlock* this, int level, BYTE* block,
     }
 }
 
-int IB_findBlockByNumber(IndirectionBlock* this, int level, DWORD number, BYTE* block, DWORD* blockAddress)
+int IB_findBlockByNumber(IndirectionBlock* this, int level, DWORD number, BYTE* block, DWORD* blockAddress, DWORD** blockAddressPtr)
 {
     int returnCode;
     if (level == 1) {
         
-        *blockAddress = this->dataPtr[number];
-        returnCode = DAM_read(this->dataPtr[number], block, FALSE);
+        if (blockAddressPtr) {
+            
+            *blockAddressPtr = &this->dataPtr[number];
+        } else {
+            
+            *blockAddress = this->dataPtr[number];
+            returnCode = DAM_read(this->dataPtr[number], block, FALSE);
+        }
     } else if (level == 2) {
         
         unsigned int numOfPointersInBlock = numOfPointersInBlock(fileSystem.superBlock.BlockSize);
@@ -127,13 +133,36 @@ int IB_findBlockByNumber(IndirectionBlock* this, int level, DWORD number, BYTE* 
         unsigned int singleIndPointerNumber = number / numOfPointersInIndirectionBlock;
         unsigned int numberInIndirectionPointer = number % numOfPointersInIndirectionBlock;
         
-        // Read the single indirection block
-        if ((returnCode = DAM_read(this->dataPtr[singleIndPointerNumber], block, FALSE)) == 0) {
+        // the singleIndirectionPointer may not be allocated, so do it
+        if (blockAddressPtr && this->dataPtr[singleIndPointerNumber] == FS_NULL_BLOCK_POINTER) {
+            
+            // allocate a new indirection pointer and continue to find
+            if ((returnCode = TR_allocateNewIndirectionBlock(block, &this->dataPtr[singleIndPointerNumber]) == 0)) {
+                
+                IndirectionBlock indirectionBlock;
+                IB_IndirectionBlock(&indirectionBlock, block);
+                
+                // even though blockAddress may be changed by the following call, if blockAddressPtr is not NULL
+                // then it won't, thus blockAddress will keep the address of this indirection block
+                *blockAddress = this->dataPtr[singleIndPointerNumber];
+                
+                // find in the indirection block the required block
+                returnCode = IB_findBlockByNumber(&indirectionBlock, 1, numberInIndirectionPointer, block, blockAddress, blockAddressPtr);
+            }
+        } else {
+            // Read the single indirection block
+            if ((returnCode = DAM_read(this->dataPtr[singleIndPointerNumber], block, FALSE)) == 0) {
 
-            IndirectionBlock indirectionBlock;
-            IB_IndirectionBlock(&indirectionBlock, block);
-            // find in the indirection block the required block
-            returnCode = IB_findBlockByNumber(&indirectionBlock, 1, numberInIndirectionPointer, block, blockAddress);
+                IndirectionBlock indirectionBlock;
+                IB_IndirectionBlock(&indirectionBlock, block);
+                
+                // even though blockAddress may be changed by the following call, if blockAddressPtr is not NULL
+                // then it won't, thus blockAddress will keep the address of this indirection block
+                *blockAddress = this->dataPtr[singleIndPointerNumber];
+                
+                // find in the indirection block the required block
+                returnCode = IB_findBlockByNumber(&indirectionBlock, 1, numberInIndirectionPointer, block, blockAddress, blockAddressPtr);
+            }
         }
     }
     

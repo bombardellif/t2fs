@@ -45,25 +45,31 @@ int t2fs_delete (char *nome)
 
 t2fs_file t2fs_open (char *nome)
 {
+    FilePath filePath;
+    FP_FilePath(&filePath, nome);
     
+    t2fs_file returnValue = FS_open(&filePath);
+    FP_destroy(&filePath);
+    
+    return returnValue;
 }
 
 int t2fs_close (t2fs_file handle)
 {
-    
+    return FS_close(handle);
 }
 
 int t2fs_read (t2fs_file handle, char *buffer, int size)
 {
-    
+    return FS_read(handle, buffer, size);
 }
 
 int t2fs_write (t2fs_file handle, char *buffer, int size)
 {
-    
+    return FS_write(handle, buffer, size);
 }
 
 int t2fs_seek (t2fs_file handle, unsigned int offset)
 {
-    
+    return FS_seek(handle, offset);
 }

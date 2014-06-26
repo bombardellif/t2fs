@@ -18,6 +18,7 @@ int TR_allocateNewDirectoryBlock(Record* this, BYTE* block, DWORD* blockAddress)
 int TR_allocateNewIndirectionBlock(BYTE* indirectionBlockMem, DWORD* indirectionBlockAddress);
 int TR_allocateNewBlock(DWORD* blockAddress);
 int TR_findEmptyPositionInArray(const DWORD const dataPtr[], const unsigned int count);
-int TR_findBlockByNumber(Record* this, DWORD number, BYTE* block, DWORD* blockAddress);
+int TR_findBlockByNumber(Record* this, DWORD number, BYTE* block, DWORD* blockAddress, DWORD** blockAddressPtr);
+int TR_appendNewBlock(Record* this, DWORD* blockAddress);
 
 #endif

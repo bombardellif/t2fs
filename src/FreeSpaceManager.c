@@ -29,7 +29,7 @@ int FSM_delete(DWORD address)
     unsigned short bitOffsetInByte = FSM_bitOffsetInByte(address);
     
     // Read the proper block from disc
-    if ((returnCode = TR_findBlockByNumber(&fileSystem.superBlock.BitMapReg, blockNumberInBitmapFile, block, &blockAddress)) == 0) {
+    if ((returnCode = TR_findBlockByNumber(&fileSystem.superBlock.BitMapReg, blockNumberInBitmapFile, block, &blockAddress, NULL)) == 0) {
         
         // set to zero the correspondent bit of the bitmap for this address
         block[byteOffsetInBlock] &= ~(0x01 << bitOffsetInByte);
@@ -54,7 +54,7 @@ int FSM_getFreeAddress(DWORD* address)
     size_t fullBytesInBlock;
     while (!returnCode) {
         
-        if ((returnCode = TR_findBlockByNumber(&fileSystem.superBlock.BitMapReg, blockNumberInBitmapFile, block, &blockAddress)) == 0) {
+        if ((returnCode = TR_findBlockByNumber(&fileSystem.superBlock.BitMapReg, blockNumberInBitmapFile, block, &blockAddress, NULL)) == 0) {
             
             fullBytesInBlock = strspn((char*)block, FULL_BITMAP_STR);
             
@@ -103,7 +103,7 @@ int FSM_markAsUsed(DWORD address)
     unsigned short bitOffsetInByte = FSM_bitOffsetInByte(address);
     
     // Read the proper block from disc
-    if ((returnCode = TR_findBlockByNumber(&fileSystem.superBlock.BitMapReg, blockNumberInBitmapFile, block, &blockAddress)) == 0) {
+    if ((returnCode = TR_findBlockByNumber(&fileSystem.superBlock.BitMapReg, blockNumberInBitmapFile, block, &blockAddress, NULL)) == 0) {
         
         // set to 1 the correspondent bit of the bitmap for this address
         block[byteOffsetInBlock] |= 0x01 << bitOffsetInByte;

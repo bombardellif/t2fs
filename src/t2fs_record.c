@@ -33,6 +33,8 @@ Record* TR_find(Record* this, FilePath* const filePath, OpenRecord* openRecord, 
     char* currentNode = FP_getNextNode(filePath);
     //Does not have current Node ( filepath == "/" or filepath == "" )
     if (currentNode == NULL){
+        openRecord->blockAddress = FS_NULL_BLOCK_POINTER;
+        openRecord->record = *this;
         block = NULL;
         return this;
     }
@@ -391,55 +393,144 @@ int TR_findEmptyPositionInArray(const DWORD const dataPtr[], const unsigned int 
 }
 
 /**
- * Finds and read from disc the block which number in the record is the parameter
+ * If blockAddressPtr is NULL then finds and read from disc the block which number in the record is the parameter
  * "number". The first block in the record is the 0, the second is the 1, and so on.
  * 
+ * if blockAddressPtr is not NULL then finds the memory address of the block pointer whose number is the number in
+ * the parameter, but do not load it, instead load the block with this block pointer.
+ * 
  * @param this
- * @param number    number of the the block in this record to load
- * @param block     the pointer to the area of memory where to load the block data
- * @param blockAddress output variable, the address of the loaded block
+ * @param number            number of the the block in this record to load
+ * @param block             the pointer to the area of memory where to load the block data
+ * @param blockAddress      output variable, the disc address of the loaded block
+ * @param blockAddressPtr   output variable, the memory address of the disc block adress pointer to the block with thie number
  * @return  0 in case of success, a number different of zero in case of error
  */
-int TR_findBlockByNumber(Record* this, DWORD number, BYTE* block, DWORD* blockAddress)
+int TR_findBlockByNumber(Record* this, DWORD number, BYTE* block, DWORD* blockAddress, DWORD** blockAddressPtr)
 {
     if (this == NULL || block == NULL)
         return T2FS_INVALID_ARGUMENT;
     
-    int returnCode;
+    int returnCode = T2FS_DIDNT_FIND;
     unsigned int numOfPointersInBlock = numOfPointersInBlock(fileSystem.superBlock.BlockSize);
     unsigned int numOfPointersInIndirectionBlock = numOfPointersInBlock * numOfPointersInBlock;
     
     // if the block is in the direct pointers
     if (number < TR_DATAPTRS_IN_RECORD) {
         
-        *blockAddress = this->dataPtr[number];
-        // Read the desired block
-        returnCode = DAM_read(this->dataPtr[number], block, FALSE);
+        if (blockAddressPtr) {
+            
+            *blockAddress = FS_NULL_BLOCK_POINTER;
+            *blockAddressPtr = &this->dataPtr[number];
+            returnCode = T2FS_SUCCESS;
+        } else {
+            *blockAddress = this->dataPtr[number];
+            // Read the desired block
+            returnCode = DAM_read(this->dataPtr[number], block, FALSE);
+        }
     }
     // subtract the number of dataPtr in the record from the "number" and check
     // if the block is in the first indirection pointer
     else if ((number -= TR_DATAPTRS_IN_RECORD) < numOfPointersInBlock) {
         
-        // Read the single indirection block
-        if ((returnCode = DAM_read(this->singleIndPtr, block, FALSE)) == 0) {
+        // the singleIndirectionPointer may not be allocated, so do it
+        if (blockAddressPtr && this->singleIndPtr == FS_NULL_BLOCK_POINTER) {
+            
+            // allocate a new indirection pointer and continue to find
+            if ((returnCode = TR_allocateNewIndirectionBlock(block, &this->singleIndPtr) == 0)) {
+                
+                IndirectionBlock indirectionBlock;
+                IB_IndirectionBlock(&indirectionBlock, block);
+                
+                // even though blockAddress may be changed by the following call, if blockAddressPtr is not NULL
+                // then it won't, thus blockAddress will keep the address of this indirection block
+                *blockAddress = this->singleIndPtr;
+                
+                // find in the indirection block the required block
+                returnCode = IB_findBlockByNumber(&indirectionBlock, 1, number, block, blockAddress, blockAddressPtr);
+            }
+        } else {
+            
+            // Read the single indirection block
+            if ((returnCode = DAM_read(this->singleIndPtr, block, FALSE)) == 0) {
 
-            IndirectionBlock indirectionBlock;
-            IB_IndirectionBlock(&indirectionBlock, block);
-            // find in the indirection block the required block
-            returnCode = IB_findBlockByNumber(&indirectionBlock, 1, number, block, blockAddress);
+                IndirectionBlock indirectionBlock;
+                IB_IndirectionBlock(&indirectionBlock, block);
+                
+                // even though blockAddress may be changed by the following call, if blockAddressPtr is not NULL
+                // then it won't, thus blockAddress will keep the address of this indirection block
+                *blockAddress = this->singleIndPtr;
+                
+                // find in the indirection block the required block
+                returnCode = IB_findBlockByNumber(&indirectionBlock, 1, number, block, blockAddress, blockAddressPtr);
+            }
         }
     }
     // subtract the number of dataPtr in the double indirection pointer from the
     // "number" and check if the block is in the second indirection pointer
     else if ((number -= numOfPointersInBlock) < numOfPointersInIndirectionBlock) {
         
-        // Read the double indirection block
-        if ((returnCode = DAM_read(this->doubleIndPtr, block, FALSE)) == 0) {
+        if (blockAddressPtr && this->doubleIndPtr == FS_NULL_BLOCK_POINTER) {
+            
+            // allocate a new indirection pointer and continue to find
+            if ((returnCode = TR_allocateNewIndirectionBlock(block, &this->doubleIndPtr) == 0)) {
+                
+                IndirectionBlock indirectionBlock;
+                IB_IndirectionBlock(&indirectionBlock, block);
+                
+                // even though blockAddress may be changed by the following call, if blockAddressPtr is not NULL
+                // then it won't, thus blockAddress will keep the address of this indirection block
+                *blockAddress = this->doubleIndPtr;
+                
+                // find in the indirection block the required block
+                returnCode = IB_findBlockByNumber(&indirectionBlock, 2, number, block, blockAddress, blockAddressPtr);
+            }
+        } else {
+            
+            // Read the double indirection block
+            if ((returnCode = DAM_read(this->doubleIndPtr, block, FALSE)) == 0) {
 
-            IndirectionBlock indirectionBlock;
-            IB_IndirectionBlock(&indirectionBlock, block);
-            // find in the indirection block the required block
-            returnCode = IB_findBlockByNumber(&indirectionBlock, 2, number, block, blockAddress);
+                IndirectionBlock indirectionBlock;
+                IB_IndirectionBlock(&indirectionBlock, block);
+                
+                // even though blockAddress may be changed by the following call, if blockAddressPtr is not NULL
+                // then it won't, thus blockAddress will keep the address of this indirection block
+                *blockAddress = this->doubleIndPtr;
+                
+                // find in the indirection block the required block
+                returnCode = IB_findBlockByNumber(&indirectionBlock, 2, number, block, blockAddress, blockAddressPtr);
+            }
+        }
+    }
+    
+    return returnCode;
+}
+
+int TR_appendNewBlock(Record* this, DWORD* newBlockAddress)
+{
+    int returnCode;
+    BYTE changedBlock[fileSystem.superBlock.BlockSize];
+    DWORD changedBlockAddress;
+    DWORD* newBlockAddressPtr;
+    
+    // find the block pointer where to allocate the new data block (newBlockAddressPtr)
+    // and the block address where this pointer is (alteredBlockAddress)
+    if ((returnCode = TR_findBlockByNumber(this, this->blocksFileSize, changedBlock, &changedBlockAddress, &newBlockAddressPtr)) == 0) {
+        
+        // Allocate a new block in disc and set the value of blockAddressPtr to the new block address in disc
+        if ((returnCode = TR_allocateNewBlock(newBlockAddressPtr)) == 0) {
+            
+            // if allocated successfully, then increments blockFileSize. Note that
+            // this function doesn't have the duty to save the record after blockFileSize was modified
+            this->blocksFileSize++;
+            *newBlockAddress = *newBlockAddressPtr;
+            
+            // Save the block with the changed pointer, but only if it was an indirection Block,
+            // because, if changedBlockAddress == FS_NULL_BLOCK_POINTER it means that the changed block
+            // is the same block where this record is in (a directroy block), and will be saved ouside this function
+            if (changedBlockAddress != FS_NULL_BLOCK_POINTER) {
+                returnCode = DAM_write(changedBlockAddress, changedBlock, FALSE);
+            }
         }
     }
     

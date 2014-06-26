@@ -11,6 +11,10 @@ FileSystem fileSystem;
 
 #define numOfPointersInBlock(blockSize)     (blockSize / sizeof(DWORD))
 #define numOfEntriesInBlock(blockSize)      (blockSize / sizeof(Record))
+#define blockNumberByPosition(position, blockSize)      (position / blockSize)
+#define blockOffsetByPosition(position, blockSize)      (position % blockSize)
+#define min(a,b)    (a > b ? b : a)
+#define maxBlocksInFile(directPtrs, blockSize, pointerSize) (directPtrs + (blockSize / pointerSize) + (blockSize / pointerSize) * (blockSize / pointerSize))
 
 int FS_initilize(){
     fileSystem.SUPERBLOCK_ADDRESS = FS_SUPERBLOCK_ADDRESS;
@@ -276,7 +280,7 @@ int FS_delete(FilePath* const filePath)
                     if (returnCode == 0) {
                         // if *blockAddressTrace[j] is FS_NULL_BLOCK_POINTER then it is to save the superblock
                         if (*blockAddressTrace[j] == FS_NULL_BLOCK_POINTER) {
-                            returnCode = DAM_write(*blockAddressTrace[j], (BYTE*)&fileSystem.superBlock, TRUE);
+                            returnCode = DAM_write(0, NULL, TRUE);
                         } else {
                             returnCode = DAM_write(*blockAddressTrace[j], blockTrace[j], FALSE);
                         }
@@ -296,5 +300,214 @@ int FS_delete(FilePath* const filePath)
 
 t2fs_file FS_open(FilePath* const filePath)
 {
-	return 0;
+    if (filePath == NULL){
+        return FS_INVALID_PATH;
+    }
+    
+    OpenRecord openRecord;
+    BYTE block[fileSystem.superBlock.BlockSize];
+    
+    //Find parent, starting from the root
+    Record* parentRecord = TR_find(&fileSystem.superBlock.RootDirReg, filePath, &openRecord, block, DB_findByName, NULL, NULL);
+    
+    if (parentRecord != NULL){
+        
+        return FS_createHandle(openRecord);
+    }else{
+        return FS_INVALID_PATH;
+    }
+}
+
+static int FS_validateHandle(t2fs_file handle)
+{
+    if (handle < 0
+    || handle >= FS_OPENFILES_MAXSIZE) {
+        return T2FS_INVALID_ARGUMENT;
+    }
+    
+    int recordIndex = fileSystem.openFiles[handle].recordIndex;
+    assert(recordIndex >=0 && recordIndex < FS_OPENRECORDS_MAXSIZE);
+    
+    if (fileSystem.openFiles[handle].currentPosition < 0
+    || fileSystem.openRecords[recordIndex].record.TypeVal == TYPEVAL_INVALIDO) {
+        return T2FS_INVALID_ARGUMENT;
+    }
+    
+    assert(fileSystem.openFiles[handle].currentPosition <= fileSystem.openRecords[recordIndex].record.bytesFileSize);
+    assert(fileSystem.openRecords[recordIndex].count);
+    return FS_SUCCESS;
+}
+
+int FS_close(t2fs_file handle)
+{
+    int validation;
+    if ((validation = FS_validateHandle(handle))) {
+        return validation;
+    }
+    
+    // if the counter of open files now is zero, then set the "openRecord" free
+    int recordIndex = fileSystem.openFiles[handle].recordIndex;
+    if ((--fileSystem.openRecords[recordIndex].count) <= 0) {
+        fileSystem.openRecords[recordIndex].record.TypeVal = TYPEVAL_INVALIDO;
+    }
+    
+    // free this openFile struct for future use
+    fileSystem.openFiles[handle].recordIndex = FS_OPENFILE_FREE;
+    
+    return FS_SUCCESS;
+}
+
+int FS_read(t2fs_file handle, char* buffer, int size)
+{
+    int validation;
+    if ((validation = FS_validateHandle(handle))) {
+        return validation;
+    }
+    
+    DWORD blockAddress;
+    unsigned int* currentPos = &fileSystem.openFiles[handle].currentPosition;
+    int returnCode = 0,
+        initialSize = size,
+        blockNo = blockNumberByPosition(*currentPos, fileSystem.superBlock.BlockSize),
+        blockOffset = blockOffsetByPosition(*currentPos, fileSystem.superBlock.BlockSize),
+        recordIndex = fileSystem.openFiles[handle].recordIndex,
+        sizeToRead;
+    
+    // Validations
+    if (!buffer
+    || size<0
+    || fileSystem.openRecords[recordIndex].record.TypeVal != TYPEVAL_REGULAR) {
+        return T2FS_INVALID_ARGUMENT;
+    }
+    
+    BYTE dataBlock[fileSystem.superBlock.BlockSize];
+    
+    while (size > 0 && blockNo < fileSystem.openRecords[recordIndex].record.blocksFileSize) {
+
+        // read the block from disc
+        if ((returnCode = TR_findBlockByNumber(&fileSystem.openRecords[recordIndex].record, blockNo, dataBlock, &blockAddress, NULL))) {
+            break;
+        }
+
+        sizeToRead = min(fileSystem.superBlock.BlockSize - blockOffset, size);
+
+        // if it the reading will imply in advancing beyond the end of file, the read only until the end
+        if ((*currentPos + sizeToRead) > fileSystem.openRecords[recordIndex].record.bytesFileSize) {
+            sizeToRead = blockOffsetByPosition(fileSystem.openRecords[recordIndex].record.bytesFileSize, fileSystem.superBlock.BlockSize)
+                    - blockOffset;
+        }
+
+        // copy data to the buffer
+        memcpy(buffer, dataBlock + blockOffset, sizeToRead);
+
+        buffer += sizeToRead;
+        *currentPos += sizeToRead;
+        size -= sizeToRead;
+
+        blockOffset = 0;
+        blockNo++;
+    }
+    
+    return returnCode ? T2FS_IOERROR : (initialSize - size);
+}
+
+int FS_write(t2fs_file handle, char* buffer, int size)
+{
+    int validation;
+    if ((validation = FS_validateHandle(handle))) {
+        return validation;
+    }
+    
+    DWORD blockAddress;
+    int const maxBlocksInFile = maxBlocksInFile(TR_DATAPTRS_IN_RECORD, fileSystem.superBlock.BlockSize, sizeof(DWORD));
+    unsigned int* currentPos = &fileSystem.openFiles[handle].currentPosition;
+    int returnCode = 0,
+        initialSize = size,
+        blockNo = blockNumberByPosition(*currentPos, fileSystem.superBlock.BlockSize),
+        blockOffset = blockOffsetByPosition(*currentPos, fileSystem.superBlock.BlockSize),
+        recordIndex = fileSystem.openFiles[handle].recordIndex,
+        sizeToWrite,
+        increasingSize;
+    
+    // Validations
+    if (!buffer
+    || size<0
+    || fileSystem.openRecords[recordIndex].record.TypeVal != TYPEVAL_REGULAR) {
+        return T2FS_INVALID_ARGUMENT;
+    }
+    
+    BYTE recordBlock[fileSystem.superBlock.BlockSize];
+    BYTE dataBlock[fileSystem.superBlock.BlockSize];
+    Record *directoryEntry;
+    
+    // loads the block where this record is in
+    if ((returnCode = DAM_read(fileSystem.openRecords[recordIndex].blockAddress, recordBlock, FALSE)) == 0) {
+        DirectoryBlock dirBlock;
+        DB_DirectoryBlock(&dirBlock, recordBlock);
+        if ((directoryEntry = DB_findByName(&dirBlock, fileSystem.openRecords[recordIndex].record.name)) == NULL) {
+            returnCode = T2FS_DIDNT_FIND;
+        }
+    }
+    
+    if (returnCode == FS_SUCCESS) {
+        while (size > 0 && blockNo < maxBlocksInFile) {
+
+            if (blockNo < directoryEntry->blocksFileSize) {
+                // block exists, so read it from disc
+                if ((returnCode = TR_findBlockByNumber(directoryEntry, blockNo, dataBlock, &blockAddress, NULL))) {
+                    break;
+                }
+            } else {
+                // block doesn't exist, so append a new one in the file
+                if ((returnCode = TR_appendNewBlock(directoryEntry, &blockAddress))) {
+                    break;
+                }
+            }
+
+            sizeToWrite = min(fileSystem.superBlock.BlockSize - blockOffset, size);
+
+            // copy data from the buffer to the dataBlock
+            memcpy(dataBlock + blockOffset, buffer, sizeToWrite);
+
+            buffer += sizeToWrite;
+            *currentPos += sizeToWrite;
+            size -= sizeToWrite;
+
+            // increase the filesize, if the writing did it
+            if ((increasingSize = *currentPos - directoryEntry->bytesFileSize) > 0) {
+                directoryEntry->bytesFileSize += increasingSize;
+            }
+
+            // write the current block
+            if ((returnCode = DAM_write(blockAddress, dataBlock, FALSE))) {
+                break;
+            }
+
+            blockOffset = 0;
+            blockNo++;
+        }
+
+        // if no errors happened, the saves the block where this record is in
+        if (returnCode == FS_SUCCESS) {
+            returnCode = DAM_write(fileSystem.openRecords[recordIndex].blockAddress, recordBlock, FALSE);
+
+            // update the value of the record kept in memory
+            fileSystem.openRecords[recordIndex].record = *directoryEntry;
+        }
+    }
+    
+    return returnCode ? T2FS_IOERROR : (initialSize - size);
+}
+
+int FS_seek(t2fs_file handle, unsigned int offset)
+{
+    int validation;
+    if ((validation = FS_validateHandle(handle))) {
+        return validation;
+    }
+    
+    // Validations
+    if (fileSystem.openRecords[recordIndex].record.TypeVal != TYPEVAL_REGULAR) {
+        return T2FS_INVALID_ARGUMENT;
+    }
 }

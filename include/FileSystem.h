@@ -20,6 +20,7 @@
 
 #define FS_OPENFILES_MAXSIZE 20
 #define FS_OPENRECORDS_MAXSIZE 20
+#define FS_OPENFILE_FREE -1
 #define FS_TRACE_DEPTH_LENGTH 4
 #define FS_BLOCK_TRACE_DEPTH_LENGTH 3
 
@@ -36,4 +37,9 @@ t2fs_file FS_createHandle(OpenRecord openRecord);
 Record* FS_findRecordInArray(DWORD dataPtr[], BYTE* block, DWORD* blockAddress, Record*(*find)(const DirectoryBlock* const,const char* param), char* name, int count, int* indexFound);
 int FS_delete(FilePath* const filePath);
 t2fs_file FS_open(FilePath* const filePath);
+int FS_close(t2fs_file handle);
+int FS_read(t2fs_file handle, char* buffer, int size);
+int FS_write(t2fs_file handle, char* buffer, int size);
+int FS_seek(t2fs_file handle, unsigned int offset);
+
 #endif
