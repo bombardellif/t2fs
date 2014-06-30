@@ -7,7 +7,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "include/FileSystem.h"
+#include "FileSystem.h"
 
 /*
  * Simple C Test Suite
@@ -20,7 +20,7 @@ void testFS_create() {
     char path[] = "/novoArquivo";
     FP_FilePath(&filePath, path);
     
-    t2fs_file result = FS_create(&filePathm TYPEVAL_REGULAR);
+    t2fs_file result = FS_create(&filePath, TYPEVAL_REGULAR);
     if (result != 0) {
         printf("%%TEST_FAILED%% time=0 testname=testFS_create (FileSystemTest) message=%d\n", result);
     }

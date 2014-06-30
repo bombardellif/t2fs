@@ -6,15 +6,11 @@
 #include <string.h>
 #include <malloc.h>
 
-static const char IDENTIFY[] = "Fernando Bombardelli da Silva (218324) - William Bombardelli da Silva (218323)";
+static char IDENTIFY[] = "Fernando Bombardelli da Silva (218324) - William Bombardelli da Silva (218323)";
 
 char *t2fs_identify (void)
 {
-    char* returnValue = (char*)calloc(strlen(IDENTIFY)+1, sizeof(char));
-    
-    strcpy(returnValue, IDENTIFY);
-    
-    return returnValue;
+    return IDENTIFY;
 }
 
 t2fs_file t2fs_create (char *nome)

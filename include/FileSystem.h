@@ -44,5 +44,6 @@ int FS_seek(t2fs_file handle, unsigned int offset);
 
 //Extra Functions for utilities
 int FS_applyCallbackToDirectory(t2fs_file handle, void(*callback)(const Record* const));
+BOOL FS_isDirectory(t2fs_file handle);
 
 #endif
