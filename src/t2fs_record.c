@@ -165,6 +165,9 @@ int TR_addRecord(Record* this, Record newRecord, OpenRecord* newOpenRecord)
                 return T2FS_CANT_ALLOCATE;
             }
         }
+        
+        // Increment the bytes counter of the directory
+        this->bytesFileSize += sizeof(Record);
     }
     //Before returning, updates the newOpenRecord
     newOpenRecord->record = newRecord;
@@ -250,6 +253,8 @@ int TR_allocateNewDirectoryBlock(Record* this, BYTE* block, DWORD* blockAddress)
             if (DAM_write(*blockAddress, block, FALSE) != 0){
                 return T2FS_IOERROR;
             }else{
+                // Increments the blocks counter of the directory
+                this->blocksFileSize++;
                 return T2FS_SUCCESS;
             }
         }else{
@@ -295,6 +300,8 @@ int TR_allocateNewDirectoryBlock(Record* this, BYTE* block, DWORD* blockAddress)
                 if (DAM_write(*blockAddress, block, FALSE) != 0){
                     return T2FS_IOERROR;
                 }else{
+                    // Increments the blocks counter of the directory
+                    this->blocksFileSize++;
                     //Write to disc the indirection block just modified
                     if (DAM_write(this->singleIndPtr, indirectionBlockMem, FALSE) != 0){
                         return T2FS_IOERROR;
@@ -303,7 +310,7 @@ int TR_allocateNewDirectoryBlock(Record* this, BYTE* block, DWORD* blockAddress)
                 }
             }else{
                 return T2FS_CANT_ALLOCATE;
-            }            
+            }
         }else{
             //Here, it hasn't found in the single Ind pointer. Try to find in the double
             BYTE indirectionBlockMem[fileSystem.superBlock.BlockSize];
@@ -335,6 +342,8 @@ int TR_allocateNewDirectoryBlock(Record* this, BYTE* block, DWORD* blockAddress)
                 if (DAM_write(this->doubleIndPtr, indirectionBlockMem, FALSE) != 0){
                     return T2FS_IOERROR;
                 }else{
+                    // Increments the blocks counter of the directory
+                    this->blocksFileSize++;
                     return T2FS_SUCCESS;
                 }
             }else{

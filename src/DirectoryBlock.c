@@ -41,3 +41,15 @@ Record* DB_findEmpty(const DirectoryBlock* const this, const char* const notUsed
     
     return NULL;
 }
+
+void DB_forEachEntry(const DirectoryBlock* const this, void(*callback)(const Record* const))
+{
+    unsigned int count = numOfEntriesInBlock(fileSystem.superBlock.BlockSize);
+    for (int i=0; i < count; i++) {
+        if (this->entries[i].TypeVal == TYPEVAL_DIRETORIO
+        || this->entries[i].TypeVal == TYPEVAL_REGULAR) {
+            
+            callback(&this->entries[i]);
+        }
+    }
+}

@@ -32,7 +32,7 @@ typedef struct s_FileSystem{
 } FileSystem;
 
 int FS_initilize();
-t2fs_file FS_create(FilePath* const filePath);
+t2fs_file FS_create(FilePath* const filePath, BYTE typeVal);
 t2fs_file FS_createHandle(OpenRecord openRecord);
 Record* FS_findRecordInArray(DWORD dataPtr[], BYTE* block, DWORD* blockAddress, Record*(*find)(const DirectoryBlock* const,const char* param), char* name, int count, int* indexFound);
 int FS_delete(FilePath* const filePath);
@@ -41,5 +41,8 @@ int FS_close(t2fs_file handle);
 int FS_read(t2fs_file handle, char* buffer, int size);
 int FS_write(t2fs_file handle, char* buffer, int size);
 int FS_seek(t2fs_file handle, unsigned int offset);
+
+//Extra Functions for utilities
+int FS_applyCallbackToDirectory(t2fs_file handle, void(*callback)(const Record* const));
 
 #endif

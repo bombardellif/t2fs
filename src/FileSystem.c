@@ -8,6 +8,7 @@
 #include <assert.h>
 
 FileSystem fileSystem;
+static BOOL initialized = FALSE;
 
 #define numOfPointersInBlock(blockSize)     (blockSize / sizeof(DWORD))
 #define numOfEntriesInBlock(blockSize)      (blockSize / sizeof(Record))
@@ -17,18 +18,22 @@ FileSystem fileSystem;
 #define maxBlocksInFile(directPtrs, blockSize, pointerSize) (directPtrs + (blockSize / pointerSize) + (blockSize / pointerSize) * (blockSize / pointerSize))
 
 int FS_initilize(){
-    fileSystem.SUPERBLOCK_ADDRESS = FS_SUPERBLOCK_ADDRESS;
-    if (DAM_read(fileSystem.SUPERBLOCK_ADDRESS, (BYTE*)(&(fileSystem.superBlock)), TRUE) == 0){
-        //Initialize with certain values, so that create handle won't mess things up
-        memset(fileSystem.openRecords, TYPEVAL_INVALIDO, FS_OPENRECORDS_MAXSIZE);
-        memset(fileSystem.openFiles, -1, FS_OPENFILES_MAXSIZE);
-        return FS_SUCCESS;
-    }else{
-        return FS_CREATE_FAIL;
+    if (!initialized) {
+        fileSystem.SUPERBLOCK_ADDRESS = FS_SUPERBLOCK_ADDRESS;
+        if (DAM_read(fileSystem.SUPERBLOCK_ADDRESS, (BYTE*)(&(fileSystem.superBlock)), TRUE) == 0){
+            //Initialize with certain values, so that create handle won't mess things up
+            memset(fileSystem.openRecords, TYPEVAL_INVALIDO, FS_OPENRECORDS_MAXSIZE);
+            memset(fileSystem.openFiles, -1, FS_OPENFILES_MAXSIZE);
+            
+            initialized = TRUE;
+            return FS_SUCCESS;
+        }else{
+            return FS_CREATE_FAIL;
+        }
     }
 }
 
-t2fs_file FS_create(FilePath* const filePath)
+t2fs_file FS_create(FilePath* const filePath, BYTE typeVal)
 {
     if (filePath == NULL){
         return FS_INVALID_PATH;
@@ -47,7 +52,7 @@ t2fs_file FS_create(FilePath* const filePath)
     
     if (parentRecord != NULL){
         Record newRecord;
-        TR_Record(&newRecord, TYPEVAL_REGULAR, FP_getLastNode(filePath), 0, 0);
+        TR_Record(&newRecord, typeVal, FP_getLastNode(filePath), 0, 0);
 
         OpenRecord newOpenRecord;
         int addRecordSignal = TR_addRecord(parentRecord, newRecord, &newOpenRecord);
@@ -88,7 +93,7 @@ t2fs_file FS_createHandle(OpenRecord openRecord)
 {
     assert(openRecord.record.TypeVal != TYPEVAL_INVALIDO);
     assert(openRecord.record.name != NULL);
-    assert(openRecord.blockAddress != 0);
+    //assert(openRecord.blockAddress != 0);
     
     //Verify if there is place in fileSytem open records and if this record is already open
     int i;
@@ -518,4 +523,46 @@ int FS_seek(t2fs_file handle, unsigned int offset)
     fileSystem.openFiles[handle].currentPosition = (offset == -1) ? fileSize : offset;
     
     return FS_SUCCESS;
+}
+
+// Extra functions for the utilities
+int FS_applyCallbackToDirectory(t2fs_file handle, void(*callback)(const Record* const))
+{
+    int validation;
+    if ((validation = FS_validateHandle(handle))) {
+        return validation;
+    }
+    
+    int const maxBlocksInFile = maxBlocksInFile(TR_DATAPTRS_IN_RECORD, fileSystem.superBlock.BlockSize, sizeof(DWORD));
+    DWORD blockAddress;
+    DWORD blockNo = 0;
+    int returnCode = 0,
+        recordIndex = fileSystem.openFiles[handle].recordIndex;
+    
+    // Validations
+    if (fileSystem.openRecords[recordIndex].record.TypeVal != TYPEVAL_DIRETORIO) {
+        return T2FS_INVALID_ARGUMENT;
+    }
+    
+    BYTE dataBlock[fileSystem.superBlock.BlockSize];
+    DirectoryBlock dirBlock;
+    
+    int i = 0;
+    while ((i < fileSystem.openRecords[recordIndex].record.blocksFileSize)
+    && (blockNo < maxBlocksInFile)) {
+        
+        // read the block from disc, if it is allocated, call the callback
+        if ((returnCode = TR_findBlockByNumber(&fileSystem.openRecords[recordIndex].record, blockNo, dataBlock, &blockAddress, NULL)) == FS_SUCCESS) {
+
+            DB_DirectoryBlock(&dirBlock, dataBlock);
+            DB_forEachEntry(&dirBlock, callback);
+            
+            i++;
+        }
+        
+        blockNo++;
+    }
+    
+    return returnCode;
+    
 }
