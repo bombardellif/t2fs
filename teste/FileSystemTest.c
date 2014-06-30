@@ -192,6 +192,76 @@ void testFS_write() {
     }
 }
 
+void testFS_seek() {
+    FS_initilize();
+    
+    FilePath filePath;
+    char path[] = "/teste1";
+    FP_FilePath(&filePath, path);
+    
+    t2fs_file handle = FS_open(&filePath);
+    if (handle < 0) {
+        printf("%%TEST_FAILED%% time=0 testname=testFS_seek (FileSystemTest) message=error opening file\n");
+    }
+    
+    char buffer[30] = "-------- Bombardelli da Silva";
+    int result = FS_write(handle, buffer, 29);
+    if (result != 29) {
+        printf("%%TEST_FAILED%% time=1 testname=testFS_seek (FileSystemTest) message=written bytes = %d\n", result);
+    }
+    
+    result = FS_seek(handle, 0);
+    if (result) {
+        printf("%%TEST_FAILED%% time=2 testname=testFS_seek (FileSystemTest) message=seek return = %d\n", result);
+    }
+    
+    char buffer1[35];
+    result = FS_read(handle, buffer1, 35);
+    if (result != 35) {
+        printf("%%TEST_FAILED%% time=3 testname=testFS_seek (FileSystemTest) message=read bytes = %d\n", result);
+    }
+    buffer1[34] ='\0';
+    printf("%s\n", buffer1);
+    
+    char buffer3[30] = "||------ Bombardelli da Sil |";
+    result = FS_write(handle, buffer3, 29);
+    if (result != 29) {
+        printf("%%TEST_FAILED%% time=4 testname=testFS_seek (FileSystemTest) message=written bytes = %d\n", result);
+    }
+    
+    result = FS_seek(handle, 29);
+    if (result) {
+        printf("%%TEST_FAILED%% time=5 testname=testFS_seek (FileSystemTest) message=seek return = %d\n", result);
+    }
+    
+    result = FS_read(handle, buffer1, 35);
+    if (result != 35) {
+        printf("%%TEST_FAILED%% time=6 testname=testFS_seek (FileSystemTest) message=read bytes = %d\n", result);
+    }
+    buffer1[34] ='\0';
+    printf("%s\n", buffer1);
+    
+    result = FS_seek(handle, -1);
+    if (result) {
+        printf("%%TEST_FAILED%% time=7 testname=testFS_seek (FileSystemTest) message=seek return = %d\n", result);
+    }
+    result = FS_read(handle, buffer1, 1);
+    if (result != 0) {
+        printf("%%TEST_FAILED%% time=8 testname=testFS_seek (FileSystemTest) message=read bytes = %d\n", result);
+    }
+    
+    result = FS_seek(handle, 0);
+    if (result) {
+        printf("%%TEST_FAILED%% time=9 testname=testFS_seek (FileSystemTest) message=seek return = %d\n", result);
+    }
+    char buffer2[1055];
+    result = FS_read(handle, buffer2, 1054);
+    printf("%s\n", buffer2);
+    if (!result) {
+        printf("%%TEST_FAILED%% time=10 testname=testFS_seek (FileSystemTest) message=read bytes = %d\n", result);
+    }
+}
+
 int main(int argc, char** argv) {
     printf("%%SUITE_STARTING%% FileSystemTest\n");
     printf("%%SUITE_STARTED%%\n");
@@ -224,13 +294,17 @@ int main(int argc, char** argv) {
     testFS_close();
     printf("%%TEST_FINISHED%% time=0 testFS_close (FileSystemTest)\n");
     
-    printf("%%TEST_STARTED%%  testFS_close (FileSystemTest)\n");
-    testFS_read();
-    printf("%%TEST_FINISHED%% time=0 testFS_close (FileSystemTest)\n");
+    printf("%%TEST_STARTED%%  testFS_write (FileSystemTest)\n");
+    testFS_write();
+    printf("%%TEST_FINISHED%% time=0 testFS_write (FileSystemTest)\n");
     
-    printf("%%TEST_STARTED%%  testFS_close (FileSystemTest)\n");
-    //testFS_write();
-    printf("%%TEST_FINISHED%% time=0 testFS_close (FileSystemTest)\n");
+    printf("%%TEST_STARTED%%  testFS_read (FileSystemTest)\n");
+    testFS_read();
+    printf("%%TEST_FINISHED%% time=0 testFS_read (FileSystemTest)\n");
+    
+    printf("%%TEST_STARTED%%  testFS_seek (FileSystemTest)\n");
+    testFS_seek();
+    printf("%%TEST_FINISHED%% time=0 testFS_seek (FileSystemTest)\n");
     printf("%%SUITE_FINISHED%% time=0\n");
 
     return (EXIT_SUCCESS);

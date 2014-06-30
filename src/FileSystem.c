@@ -506,8 +506,16 @@ int FS_seek(t2fs_file handle, unsigned int offset)
         return validation;
     }
     
+    int recordIndex = fileSystem.openFiles[handle].recordIndex;
+    unsigned int fileSize = fileSystem.openRecords[recordIndex].record.bytesFileSize;
+    
     // Validations
-    if (fileSystem.openRecords[recordIndex].record.TypeVal != TYPEVAL_REGULAR) {
+    if ((fileSystem.openRecords[recordIndex].record.TypeVal != TYPEVAL_REGULAR)
+    || (offset != -1 && offset > fileSize)) {
         return T2FS_INVALID_ARGUMENT;
     }
+    
+    fileSystem.openFiles[handle].currentPosition = (offset == -1) ? fileSize : offset;
+    
+    return FS_SUCCESS;
 }
