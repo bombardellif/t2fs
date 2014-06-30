@@ -30,7 +30,7 @@ void FP_FilePath(FilePath* this, char* path)
         if (lastDelim) {
             int pathUntilDelimSize = lastDelim - this->path + 1;
             this->pathWithoutLastNode = (char*) calloc(pathUntilDelimSize, sizeof(char));
-            this->pathLastNode = (char*) calloc(pathLen - pathUntilDelimSize, sizeof(char));
+            this->pathLastNode = (char*) calloc(pathLen - pathUntilDelimSize + 1, sizeof(char));
 
             // copy from path to pathWithoutLastNode until the last delimiter
             *lastDelim = '\0';
@@ -38,7 +38,7 @@ void FP_FilePath(FilePath* this, char* path)
             *lastDelim = DS;
             
             // copy from path to pathLastNode since the last delimiter until the end
-            strcpy(this->pathLastNode, lastDelim);
+            strcpy(this->pathLastNode, lastDelim+1);
         } else {
             this->pathWithoutLastNode = NULL;
             this->pathLastNode = NULL;

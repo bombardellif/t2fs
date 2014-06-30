@@ -15,15 +15,18 @@ void IB_IndirectionBlock(IndirectionBlock* this, BYTE* block)
     this->dataPtr = (DWORD*) block;
 }
 
-Record* IB_find(IndirectionBlock* this, char* name, int level, BYTE* block, DWORD* blockAddress, Record*(*find)(const DirectoryBlock* const, const char* param))
+Record* IB_find(IndirectionBlock* this, char* name, int level, BYTE* block, DWORD* blockAddress, Record*(*find)(const DirectoryBlock* const, const char* param), BYTE blockTrace[][FS_BLOCK_TRACE_DEPTH_LENGTH], DWORD* blockAddressTrace[])
 {
     if (this == NULL || this->dataPtr == NULL || name == NULL)
         return NULL;
     
     //If it is a single indirection
     if (level == 1){
-        return FS_findRecordInArray(this->dataPtr, block, blockAddress, find, name, numOfPointersInBlock(fileSystem.superBlock.BlockSize));
+        
+        return FS_findRecordInArray(this->dataPtr, block, blockAddress, find, name, numOfPointersInBlock(fileSystem.superBlock.BlockSize), NULL);
+        
     }else if (level == 2){
+        
         //If it is double indirection
         //Iterates over this indirection block (which is a double one). for each indirection block apointed tries to find
         int i;
@@ -32,10 +35,19 @@ Record* IB_find(IndirectionBlock* this, char* name, int level, BYTE* block, DWOR
             BYTE blockOfIndirection[fileSystem.superBlock.BlockSize];
             if (!DAM_read(this->dataPtr[i], blockOfIndirection, FALSE)){
 
+                // Make trace[2] - null trace[3]
+                if (blockAddressTrace && blockTrace) {
+                    memcpy(blockTrace[2], blockOfIndirection, sizeof(blockTrace[2]));
+                    IndirectionBlock ibTrace;
+                    IB_IndirectionBlock(&ibTrace, blockTrace[1]);
+                    blockAddressTrace[2] = IB_findDataPtrByValue(&ibTrace, this->dataPtr[i]);
+                    blockAddressTrace[3] = NULL;
+                }
+                
                 IndirectionBlock indirectionBlock;
                 IB_IndirectionBlock(&indirectionBlock, blockOfIndirection);
 
-                Record* foundRecord = IB_find(&indirectionBlock, name, 1, block, blockAddress, find);
+                Record* foundRecord = IB_find(&indirectionBlock, name, 1, block, blockAddress, find, blockTrace, blockAddressTrace);
                 if (foundRecord != NULL){
                     return foundRecord;
                 }
@@ -101,13 +113,19 @@ int IB_allocateNewDirectoryBlock(IndirectionBlock* this, int level, BYTE* block,
     }
 }
 
-int IB_findBlockByNumber(IndirectionBlock* this, int level, DWORD number, BYTE* block, DWORD* blockAddress)
+int IB_findBlockByNumber(IndirectionBlock* this, int level, DWORD number, BYTE* block, DWORD* blockAddress, DWORD** blockAddressPtr)
 {
     int returnCode;
     if (level == 1) {
         
-        *blockAddress = this->dataPtr[number];
-        returnCode = DAM_read(this->dataPtr[number], block, FALSE);
+        if (blockAddressPtr) {
+            
+            *blockAddressPtr = &this->dataPtr[number];
+        } else {
+            
+            *blockAddress = this->dataPtr[number];
+            returnCode = DAM_read(this->dataPtr[number], block, FALSE);
+        }
     } else if (level == 2) {
         
         unsigned int numOfPointersInBlock = numOfPointersInBlock(fileSystem.superBlock.BlockSize);
@@ -115,13 +133,36 @@ int IB_findBlockByNumber(IndirectionBlock* this, int level, DWORD number, BYTE* 
         unsigned int singleIndPointerNumber = number / numOfPointersInIndirectionBlock;
         unsigned int numberInIndirectionPointer = number % numOfPointersInIndirectionBlock;
         
-        // Read the single indirection block
-        if ((returnCode = DAM_read(this->dataPtr[singleIndPointerNumber], block, FALSE)) == 0) {
+        // the singleIndirectionPointer may not be allocated, so do it
+        if (blockAddressPtr && this->dataPtr[singleIndPointerNumber] == FS_NULL_BLOCK_POINTER) {
+            
+            // allocate a new indirection pointer and continue to find
+            if ((returnCode = TR_allocateNewIndirectionBlock(block, &this->dataPtr[singleIndPointerNumber]) == 0)) {
+                
+                IndirectionBlock indirectionBlock;
+                IB_IndirectionBlock(&indirectionBlock, block);
+                
+                // even though blockAddress may be changed by the following call, if blockAddressPtr is not NULL
+                // then it won't, thus blockAddress will keep the address of this indirection block
+                *blockAddress = this->dataPtr[singleIndPointerNumber];
+                
+                // find in the indirection block the required block
+                returnCode = IB_findBlockByNumber(&indirectionBlock, 1, numberInIndirectionPointer, block, blockAddress, blockAddressPtr);
+            }
+        } else {
+            // Read the single indirection block
+            if ((returnCode = DAM_read(this->dataPtr[singleIndPointerNumber], block, FALSE)) == 0) {
 
-            IndirectionBlock indirectionBlock;
-            IB_IndirectionBlock(&indirectionBlock, block);
-            // find in the indirection block the required block
-            returnCode = IB_findBlockByNumber(&indirectionBlock, 1, numberInIndirectionPointer, block, blockAddress);
+                IndirectionBlock indirectionBlock;
+                IB_IndirectionBlock(&indirectionBlock, block);
+                
+                // even though blockAddress may be changed by the following call, if blockAddressPtr is not NULL
+                // then it won't, thus blockAddress will keep the address of this indirection block
+                *blockAddress = this->dataPtr[singleIndPointerNumber];
+                
+                // find in the indirection block the required block
+                returnCode = IB_findBlockByNumber(&indirectionBlock, 1, numberInIndirectionPointer, block, blockAddress, blockAddressPtr);
+            }
         }
     }
     
@@ -168,4 +209,18 @@ int IB_freeBlocks(IndirectionBlock* this, int level)
     }
     
     return returnCode;
+}
+
+DWORD* IB_findDataPtrByValue(IndirectionBlock* this, DWORD value) {
+    if (this == NULL)
+        return NULL;
+    
+	unsigned int count = numOfPointersInBlock(fileSystem.superBlock.BlockSize);
+    for (int i=0; i < count; i++) {
+        if (this->dataPtr[i] == value) {
+            return & this->dataPtr[i];
+        }
+    }
+    
+    return NULL;
 }
