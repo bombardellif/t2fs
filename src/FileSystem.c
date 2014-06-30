@@ -566,3 +566,18 @@ int FS_applyCallbackToDirectory(t2fs_file handle, void(*callback)(const Record* 
     return returnCode;
     
 }
+
+BOOL FS_isDirectory(t2fs_file handle)
+{
+    int validation;
+    if ((validation = FS_validateHandle(handle))) {
+        return validation;
+    }
+    
+    int recordIndex = fileSystem.openFiles[handle].recordIndex;
+    
+    // Validations
+    return (fileSystem.openRecords[recordIndex].record.TypeVal == TYPEVAL_DIRETORIO)
+            ? TRUE
+            : FALSE;
+}
