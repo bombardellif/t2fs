@@ -77,11 +77,11 @@ int main(int argc, char** argv) {
     printf("%%TEST_STARTED%%  testFS_create (FileSystemTest)\n");
     testFS_create();
     printf("%%TEST_FINISHED%% time=0 testFS_create (FileSystemTest)\n");
-    /*
+    
     printf("%%TEST_STARTED%%  testFS_createHandle (FileSystemTest)\n");
     testFS_createHandle();
     printf("%%TEST_FINISHED%% time=0 testFS_createHandle (FileSystemTest)\n");
-
+    /*
     printf("%%TEST_STARTED%%  testFS_delete (FileSystemTest)\n");
     testFS_delete();
     printf("%%TEST_FINISHED%% time=0 testFS_delete (FileSystemTest)\n");
