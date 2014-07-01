@@ -48,7 +48,7 @@ void testFind1() {
         
         BYTE b[fileSystem.superBlock.BlockSize];
         DWORD ba;
-        if (IB_find(&ib, name1, 1, b, &ba, DB_findByName) != NULL){
+        if (IB_find(&ib, name1, 1, b, &ba, DB_findByName, NULL, NULL) != NULL){
             if (strcmp((char*)block, (char*)b) == 0){
                 if (blockAddress != ba)
                     printf("%%TEST_FAILED%% time=0 testname=testFind1 (IndirectionBlockTest) message=address are different\n");

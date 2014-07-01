@@ -7,11 +7,14 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "FileSystem.h"
 
 /*
  * Simple C Test Suite
  */
+
+extern FileSystem fileSystem;
 
 void testFS_create() {
     FS_initilize();
@@ -29,7 +32,7 @@ void testFS_create() {
 void testFS_createHandle() {
     OpenRecord openRecord;
     t2fs_file result = FS_createHandle(openRecord);
-    if (1 /*check result*/) {
+    if (result >= 0) {
         printf("%%TEST_FAILED%% time=0 testname=testFS_createHandle (FileSystemTest) message=error message sample\n");
     }
 }
@@ -76,23 +79,25 @@ void testFS_delete() {
 }
 
 void testFS_findRecordInArray() {
-    DWORD* dataPtr;
-    BYTE* block;
-    DWORD* blockAddress;
-    //Record * (*)(const DirectoryBlock * const, const char*) find;
-    char* name;
-    int count;
-    //Record* result = FS_findRecordInArray(dataPtr, block, blockAddress, find, name, count);
-    if (1 /*check result*/) {
+    DWORD dataPtr[fileSystem.superBlock.BlockSize];
+    memset(dataPtr, FS_NULL_BLOCK_POINTER, fileSystem.superBlock.BlockSize);
+    
+    BYTE* block = NULL;
+    DWORD* blockAddress = NULL;
+    int count = 1; //fileSystem.superBlock.BlockSize;
+    int index;
+    Record* result = FS_findRecordInArray(dataPtr, block, blockAddress, DB_findEmpty, NULL, count, &index);
+    
+    if (result != NULL) {
         printf("%%TEST_FAILED%% time=0 testname=testFS_findRecordInArray (FileSystemTest) message=error message sample\n");
     }
 }
 
 void testFS_initilize() {
-    int result = FS_initilize();
-    if (1 /*check result*/) {
+    FS_initilize();
+    /*if (result != FS_SUCCESS) {
         printf("%%TEST_FAILED%% time=0 testname=testFS_initilize (FileSystemTest) message=error message sample\n");
-    }
+    }*/
 }
 
 void testFS_open() {
@@ -265,7 +270,7 @@ void testFS_seek() {
 int main(int argc, char** argv) {
     printf("%%SUITE_STARTING%% FileSystemTest\n");
     printf("%%SUITE_STARTED%%\n");
-/*
+
     printf("%%TEST_STARTED%%  testFS_create (FileSystemTest)\n");
     testFS_create();
     printf("%%TEST_FINISHED%% time=0 testFS_create (FileSystemTest)\n");
@@ -273,11 +278,11 @@ int main(int argc, char** argv) {
     printf("%%TEST_STARTED%%  testFS_createHandle (FileSystemTest)\n");
     testFS_createHandle();
     printf("%%TEST_FINISHED%% time=0 testFS_createHandle (FileSystemTest)\n");
-    /*
+/*
     printf("%%TEST_STARTED%%  testFS_delete (FileSystemTest)\n");
     testFS_delete();
     printf("%%TEST_FINISHED%% time=0 testFS_delete (FileSystemTest)\n");
-
+*/
     printf("%%TEST_STARTED%%  testFS_findRecordInArray (FileSystemTest)\n");
     testFS_findRecordInArray();
     printf("%%TEST_FINISHED%% time=0 testFS_findRecordInArray (FileSystemTest)\n");
@@ -285,7 +290,7 @@ int main(int argc, char** argv) {
     printf("%%TEST_STARTED%%  testFS_initilize (FileSystemTest)\n");
     testFS_initilize();
     printf("%%TEST_FINISHED%% time=0 testFS_initilize (FileSystemTest)\n");
-*/
+/* 
     printf("%%TEST_STARTED%%  testFS_open (FileSystemTest)\n");
     testFS_open();
     printf("%%TEST_FINISHED%% time=0 testFS_open (FileSystemTest)\n");
@@ -306,6 +311,6 @@ int main(int argc, char** argv) {
     testFS_seek();
     printf("%%TEST_FINISHED%% time=0 testFS_seek (FileSystemTest)\n");
     printf("%%SUITE_FINISHED%% time=0\n");
-
+*/
     return (EXIT_SUCCESS);
 }

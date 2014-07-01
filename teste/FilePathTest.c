@@ -34,7 +34,6 @@ void testFP_FilePath() {
 void testFP_getNextNode() {
     FilePath this;
     char path[] = "/this/is/a/test/sample/1";
-    char pathWoLastNode[] = "/this/is/a/test/sample";
     char expected[][7] = {"this", "is", "a", "test", "sample", "1"};
     char* result;
     
@@ -57,7 +56,6 @@ void testFP_getNextNode() {
 void testFP_hasNextNode() {
     FilePath this;
     char path[] = "/this/is/a/test/sample/1";
-    char pathWoLastNode[] = "/this/is/a/test/sample";
     char expected[][7] = {"this", "is", "a", "test", "sample", "1"};
     char* resultNextNode;
     

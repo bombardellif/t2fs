@@ -7,6 +7,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "DiscAccessManager.h"
 #include "FileSystem.h"
 #include "apidisk.h"
@@ -68,7 +69,7 @@ void testDAM_read() {
             DirectoryBlock dir;
             DB_DirectoryBlock(&dir, block2);
             DAM_read(dir.entries[0].dataPtr[0], block2, FALSE);
-            printf("%d\n", block2);
+            printf("%s\n", block2);
             
             result = DAM_read(root.entries[2].dataPtr[0], block2, FALSE);
             printf("%s\n", block2);
@@ -124,7 +125,7 @@ void testDAM_write() {
             BYTE block2[sb.BlockSize];
             result = DAM_read(root.entries[0].dataPtr[0], block2, FALSE);
             printf("%s\n", block2);
-            strcat(block2, " - TESTE DE ALTERAÇÃO DE ARQUIVO");
+            strcat((char*)block2, " - TESTE DE ALTERAÇÃO DE ARQUIVO");
             
             result = DAM_write(root.entries[0].dataPtr[0], block2, FALSE);
             if (!result) {
