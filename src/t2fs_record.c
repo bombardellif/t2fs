@@ -483,17 +483,18 @@ int TR_findBlockByNumber(Record* this, DWORD number, BYTE* block, DWORD* blockAd
     // "number" and check if the block is in the second indirection pointer
     else if ((number -= numOfPointersInBlock) < numOfPointersInIndirectionBlock) {
         
+        BYTE doubleIndPtrBlock[fileSystem.superBlock.BlockSize];
         if (blockAddressPtr && this->doubleIndPtr == FS_NULL_BLOCK_POINTER) {
             
             // allocate a new indirection pointer and continue to find
-            if ((returnCode = TR_allocateNewIndirectionBlock(block, &this->doubleIndPtr)) == 0) {
+            if ((returnCode = TR_allocateNewIndirectionBlock(doubleIndPtrBlock, &this->doubleIndPtr)) == 0) {
                 
                 IndirectionBlock indirectionBlock;
-                IB_IndirectionBlock(&indirectionBlock, block);
+                IB_IndirectionBlock(&indirectionBlock, doubleIndPtrBlock);
                 
                 // even though blockAddress may be changed by the following call, if blockAddressPtr is not NULL
                 // then it won't, thus blockAddress will keep the address of this indirection block
-                *blockAddress = this->doubleIndPtr;
+                //*blockAddress = this->doubleIndPtr;
                 
                 // find in the indirection block the required block
                 returnCode = IB_findBlockByNumber(&indirectionBlock, 2, number, block, blockAddress, blockAddressPtr);
@@ -501,19 +502,23 @@ int TR_findBlockByNumber(Record* this, DWORD number, BYTE* block, DWORD* blockAd
         } else {
             
             // Read the double indirection block
-            if ((returnCode = DAM_read(this->doubleIndPtr, block, FALSE)) == 0) {
+            if ((returnCode = DAM_read(this->doubleIndPtr, doubleIndPtrBlock, FALSE)) == 0) {
 
                 IndirectionBlock indirectionBlock;
-                IB_IndirectionBlock(&indirectionBlock, block);
+                IB_IndirectionBlock(&indirectionBlock, doubleIndPtrBlock);
                 
                 // even though blockAddress may be changed by the following call, if blockAddressPtr is not NULL
                 // then it won't, thus blockAddress will keep the address of this indirection block
-                *blockAddress = this->doubleIndPtr;
+                //*blockAddress = this->doubleIndPtr;
                 
                 // find in the indirection block the required block
                 returnCode = IB_findBlockByNumber(&indirectionBlock, 2, number, block, blockAddress, blockAddressPtr);
             }
         }
+        
+        // saves the double ind Pointer, no matter what
+        if (returnCode == FS_SUCCESS)
+            returnCode = DAM_write(this->doubleIndPtr, doubleIndPtrBlock, FALSE);
     }
     
     return returnCode;
