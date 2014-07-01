@@ -270,7 +270,7 @@ void testFS_seek() {
 int main(int argc, char** argv) {
     printf("%%SUITE_STARTING%% FileSystemTest\n");
     printf("%%SUITE_STARTED%%\n");
-    printf(t2fs_identify());
+    printf("%s", t2fs_identify());
 
 /*
     printf("%%TEST_STARTED%%  testFS_create (FileSystemTest)\n");
