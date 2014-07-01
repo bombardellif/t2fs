@@ -25,7 +25,7 @@ void TR_Record(Record* this, BYTE typeVal, char* name, DWORD blocksFileSize, DWO
     this->doubleIndPtr = FS_NULL_BLOCK_POINTER;
 }
 
-Record* TR_find(Record* this, FilePath* const filePath, OpenRecord* openRecord, BYTE* block, Record*(*find)(const DirectoryBlock* const this, const char* const notUsed), BYTE blockTrace[][FS_BLOCK_TRACE_DEPTH_LENGTH], DWORD* blockAddressTrace[])
+Record* TR_find(Record* this, FilePath* const filePath, OpenRecord* openRecord, BYTE* block, Record*(*find)(const DirectoryBlock* const this, const char* const notUsed), BYTE blockTrace[][1024], DWORD* blockAddressTrace[])
 {
     if (this == NULL || openRecord == NULL || block == NULL)
         return NULL;
@@ -76,7 +76,7 @@ Record* TR_find(Record* this, FilePath* const filePath, OpenRecord* openRecord, 
     }
 }
 
-Record* TR_findRecordInRecord(Record* this, OpenRecord* openRecord, BYTE* block, Record*(*find)(const DirectoryBlock* const this, const char* const notUsed), char* param, BYTE blockTrace[][FS_BLOCK_TRACE_DEPTH_LENGTH], DWORD* blockAddressTrace[])
+Record* TR_findRecordInRecord(Record* this, OpenRecord* openRecord, BYTE* block, Record*(*find)(const DirectoryBlock* const this, const char* const notUsed), char* param, BYTE blockTrace[][1024], DWORD* blockAddressTrace[])
 {
     int indexFound;
     Record* foundRecord;

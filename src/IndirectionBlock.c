@@ -15,7 +15,7 @@ void IB_IndirectionBlock(IndirectionBlock* this, BYTE* block)
     this->dataPtr = (DWORD*) block;
 }
 
-Record* IB_find(IndirectionBlock* this, char* name, int level, BYTE* block, DWORD* blockAddress, Record*(*find)(const DirectoryBlock* const, const char* param), BYTE blockTrace[][FS_BLOCK_TRACE_DEPTH_LENGTH], DWORD* blockAddressTrace[])
+Record* IB_find(IndirectionBlock* this, char* name, int level, BYTE* block, DWORD* blockAddress, Record*(*find)(const DirectoryBlock* const, const char* param), BYTE blockTrace[][1024], DWORD* blockAddressTrace[])
 {
     if (this == NULL || this->dataPtr == NULL || name == NULL)
         return NULL;

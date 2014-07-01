@@ -62,6 +62,9 @@ int main(int argc, char** argv) {
         }
     }
     
+    t2fs_close(destinyFile);
+    fclose(nativeFile);
+    
     if (returnCode) {
         printf("ERRO: Erro ao copiar arquivo\n");
         return EXIT_FAILURE;

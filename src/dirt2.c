@@ -43,6 +43,8 @@ int main(int argc, char** argv) {
         return EXIT_FAILURE;
     }
     
+    t2fs_close(dirHandle);
+    
     return (EXIT_SUCCESS);
 }
 

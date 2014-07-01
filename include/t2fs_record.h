@@ -10,8 +10,8 @@
 void TR_Record(Record* this, BYTE typeVal, char* name, DWORD blocksFileSize, DWORD bytesFileSize);
 /** @TODO */
 void TR_destroy(Record* this);
-Record* TR_find(Record* this, FilePath* const filePath, OpenRecord* openRecord, BYTE* block, Record*(*find)(const DirectoryBlock* const this, const char* const notUsed), BYTE blockTrace[][FS_BLOCK_TRACE_DEPTH_LENGTH], DWORD* blockAddressTrace[]);
-Record* TR_findRecordInRecord(Record* this, OpenRecord* openRecord, BYTE* block, Record*(*find)(const DirectoryBlock* const this, const char* const notUsed), char* param, BYTE blockTrace[][FS_BLOCK_TRACE_DEPTH_LENGTH], DWORD* blockAddressTrace[]);
+Record* TR_find(Record* this, FilePath* const filePath, OpenRecord* openRecord, BYTE* block, Record*(*find)(const DirectoryBlock* const this, const char* const notUsed), BYTE blockTrace[][1024], DWORD* blockAddressTrace[]);
+Record* TR_findRecordInRecord(Record* this, OpenRecord* openRecord, BYTE* block, Record*(*find)(const DirectoryBlock* const this, const char* const notUsed), char* param, BYTE blockTrace[][1024], DWORD* blockAddressTrace[]);
 int TR_addRecord(Record* this, Record newRecord, OpenRecord* newOpenRecord);
 int TR_freeBlocks(Record* this);
 int TR_allocateNewDirectoryBlock(Record* this, BYTE* block, DWORD* blockAddress);
