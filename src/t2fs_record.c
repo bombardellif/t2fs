@@ -51,7 +51,8 @@ Record* TR_find(Record* this, FilePath* const filePath, OpenRecord* openRecord, 
             }
             
             //Keep surfing in directory until find the target
-            return TR_find(foundRecord, filePath, openRecord, block, find, blockTrace, blockAddressTrace);
+            Record foundRecordCopy = *foundRecord;
+            return TR_find(&foundRecordCopy, filePath, openRecord, block, find, blockTrace, blockAddressTrace);
         } else {
             // Make trace[3]
             // Copy just the adress to the directory block where the target file is in (do not copy the block)

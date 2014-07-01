@@ -164,10 +164,12 @@ Record* FS_findRecordInArray(DWORD dataPtr[], BYTE* block, DWORD* blockAddress, 
         return NULL;
     
     //Iterates over data pointer, looking for the directory block that has the record of the file of name "name"
+    DWORD lookedAddress;
     int i;
 	for (i = 0; i < count; i++){
+        lookedAddress = dataPtr[i];
         //Read this block from the disc
-        if (!DAM_read(dataPtr[i], block, FALSE)){
+        if (!DAM_read(lookedAddress, block, FALSE)){
             
             DirectoryBlock directoryBlock;
             DB_DirectoryBlock(&directoryBlock, block);
@@ -175,7 +177,7 @@ Record* FS_findRecordInArray(DWORD dataPtr[], BYTE* block, DWORD* blockAddress, 
             Record* foundRecord = find(&directoryBlock, name);
             
             if (foundRecord != NULL){
-                *blockAddress = dataPtr[i];
+                *blockAddress = lookedAddress;
                 if (indexFound)
                     *indexFound = i;
                 return foundRecord;

@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
         return EXIT_FAILURE;
     }
     
-    if (t2fs_delete(argv[1]) < 0) {
+    if (t2fs_delete(argv[1])) {
         printf("ERRO: Erro ao deletar diretório, ele deve ser vazio\n");
         return EXIT_FAILURE;
     }

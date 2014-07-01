@@ -14,16 +14,20 @@
 /*
  * 
  */
-int main__(int argc, char** argv) {
+int main(int argc, char** argv) {
 
     if (argc < 2) {
         printf("ERRO: Parâmetros inválidos\n");
         return EXIT_FAILURE;
     }
     
-    // Create the directory
-    FS_initilize();
+    t2fs_file handle = t2fs_open(argv[1]);
+    if (handle == 0) {
+        printf("ERRO: Diretório já existe\n");
+        return EXIT_FAILURE;
+    }
     
+    // Create the directory;
     FilePath filePath;
     FP_FilePath(&filePath, argv[1]);
     
