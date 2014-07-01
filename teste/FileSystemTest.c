@@ -41,7 +41,7 @@ void testFS_delete() {
     FS_initilize();
     
     FilePath filePath;
-    char path[] = "/dir1";
+    char path[] = "/dir1/teste4-dir1";
     FP_FilePath(&filePath, path);
     int result = FS_delete(&filePath);
     FP_destroy(&filePath);
@@ -122,12 +122,12 @@ void testFS_close() {
     
     t2fs_file result = FS_open(&filePath);
     if (result < 0) {
-        printf("%%TEST_FAILED%% time=0 testname=testFS_open (FileSystemTest) message=error opening file\n");
+        printf("%%TEST_FAILED%% time=0 testname=testFS_close (FileSystemTest) message=error openning file\n");
     }
     
     t2fs_file resultClose = FS_close(result);
     if (resultClose < 0) {
-        printf("%%TEST_FAILED%% time=0 testname=testFS_open (FileSystemTest) message=error closing file\n");
+        printf("%%TEST_FAILED%% time=0 testname=testFS_close (FileSystemTest) message=error closing file\n");
     }
 }
 
@@ -270,27 +270,28 @@ void testFS_seek() {
 int main(int argc, char** argv) {
     printf("%%SUITE_STARTING%% FileSystemTest\n");
     printf("%%SUITE_STARTED%%\n");
+    printf(t2fs_identify());
 
+/*
     printf("%%TEST_STARTED%%  testFS_create (FileSystemTest)\n");
     testFS_create();
     printf("%%TEST_FINISHED%% time=0 testFS_create (FileSystemTest)\n");
+*/
     
+/*
     printf("%%TEST_STARTED%%  testFS_createHandle (FileSystemTest)\n");
     testFS_createHandle();
     printf("%%TEST_FINISHED%% time=0 testFS_createHandle (FileSystemTest)\n");
-/*
-    printf("%%TEST_STARTED%%  testFS_delete (FileSystemTest)\n");
-    testFS_delete();
-    printf("%%TEST_FINISHED%% time=0 testFS_delete (FileSystemTest)\n");
-*/
+
     printf("%%TEST_STARTED%%  testFS_findRecordInArray (FileSystemTest)\n");
     testFS_findRecordInArray();
     printf("%%TEST_FINISHED%% time=0 testFS_findRecordInArray (FileSystemTest)\n");
+*/
 
     printf("%%TEST_STARTED%%  testFS_initilize (FileSystemTest)\n");
     testFS_initilize();
     printf("%%TEST_FINISHED%% time=0 testFS_initilize (FileSystemTest)\n");
-/* 
+ 
     printf("%%TEST_STARTED%%  testFS_open (FileSystemTest)\n");
     testFS_open();
     printf("%%TEST_FINISHED%% time=0 testFS_open (FileSystemTest)\n");
@@ -310,7 +311,11 @@ int main(int argc, char** argv) {
     printf("%%TEST_STARTED%%  testFS_seek (FileSystemTest)\n");
     testFS_seek();
     printf("%%TEST_FINISHED%% time=0 testFS_seek (FileSystemTest)\n");
+    
+    printf("%%TEST_STARTED%%  testFS_delete (FileSystemTest)\n");
+    testFS_delete();
+    printf("%%TEST_FINISHED%% time=0 testFS_delete (FileSystemTest)\n");
     printf("%%SUITE_FINISHED%% time=0\n");
-*/
+
     return (EXIT_SUCCESS);
 }
