@@ -12,7 +12,7 @@
 
 void printDirEntry(const Record* const entry) {
     if (entry->TypeVal == TYPEVAL_REGULAR || entry->TypeVal == TYPEVAL_DIRETORIO) {
-        printf("%-39s %c\t%10u\t%20u bytes\n",
+        printf("%-39s %c %6u %10u bytes\n",
             entry->name,
             (entry->TypeVal == TYPEVAL_REGULAR) ? 'r' : 'd',
             entry->blocksFileSize,

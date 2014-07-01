@@ -165,6 +165,9 @@ int TR_addRecord(Record* this, Record newRecord, OpenRecord* newOpenRecord)
             if (allocateSignal != T2FS_SUCCESS){
                 return T2FS_CANT_ALLOCATE;
             }
+            
+            // the pointer targetRecord will point to the first position of the just createdBlock
+            targetRecord = (Record*)modifiedBlock;
         }
         
         // Increment the bytes counter of the directory
