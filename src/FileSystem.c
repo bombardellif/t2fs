@@ -30,6 +30,8 @@ int FS_initilize(){
         }else{
             return FS_CREATE_FAIL;
         }
+    }else{
+        return FS_SUCCESS;
     }
 }
 
