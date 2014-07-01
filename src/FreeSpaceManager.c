@@ -97,7 +97,7 @@ int FSM_markAsUsed(DWORD address)
 {
     DWORD blockAddress;
     BYTE block[fileSystem.superBlock.BlockSize];
-    int returnCode;
+    int returnCode = 0;
     unsigned int blockNumberInBitmapFile = FSM_blockNumberInBitmapFile(address, fileSystem.superBlock.BlockSize);
     unsigned int byteOffsetInBlock = FSM_byteOffsetInBlock(address, fileSystem.superBlock.BlockSize);
     unsigned short bitOffsetInByte = FSM_bitOffsetInByte(address);

@@ -115,7 +115,7 @@ int IB_allocateNewDirectoryBlock(IndirectionBlock* this, int level, BYTE* block,
 
 int IB_findBlockByNumber(IndirectionBlock* this, int level, DWORD number, BYTE* block, DWORD* blockAddress, DWORD** blockAddressPtr)
 {
-    int returnCode;
+    int returnCode = 0;
     if (level == 1) {
         
         if (blockAddressPtr) {
@@ -171,7 +171,7 @@ int IB_findBlockByNumber(IndirectionBlock* this, int level, DWORD number, BYTE* 
 
 int IB_freeBlocks(IndirectionBlock* this, int level)
 {
-    int returnCode;
+    int returnCode = 0;
     unsigned int numOfPointersInBlock = numOfPointersInBlock(fileSystem.superBlock.BlockSize);
     
     if (level == 1) {
