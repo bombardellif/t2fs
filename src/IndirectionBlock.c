@@ -131,7 +131,7 @@ int IB_findBlockByNumber(IndirectionBlock* this, int level, DWORD number, BYTE* 
         unsigned int numOfPointersInBlock = numOfPointersInBlock(fileSystem.superBlock.BlockSize);
         unsigned int numOfPointersInIndirectionBlock = numOfPointersInBlock * numOfPointersInBlock;
         unsigned int singleIndPointerNumber = number / numOfPointersInIndirectionBlock;
-        unsigned int numberInIndirectionPointer = number % numOfPointersInIndirectionBlock;
+        unsigned int numberInIndirectionPointer = number % numOfPointersInBlock;
         
         // the singleIndirectionPointer may not be allocated, so do it
         if (blockAddressPtr && this->dataPtr[singleIndPointerNumber] == FS_NULL_BLOCK_POINTER) {

@@ -43,10 +43,10 @@ int main(int argc, char** argv) {
     // Uses a buffer of 1KB to transfer from one file to the other
     int returnCode = 0;
     int elemsRead;
-    char buffer[1024];
+    char buffer[310 * 1024];
     while (!feof(nativeFile)) {
         
-        if ((elemsRead = fread(buffer, 1, 1024, nativeFile)) != 0) {
+        if ((elemsRead = fread(buffer, 1, 310 * 1024, nativeFile)) != 0) {
             
             if (t2fs_write(destinyFile, buffer, elemsRead) != elemsRead) {
                 // error, stop copying

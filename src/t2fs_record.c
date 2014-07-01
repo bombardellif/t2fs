@@ -524,7 +524,7 @@ int TR_findBlockByNumber(Record* this, DWORD number, BYTE* block, DWORD* blockAd
     return returnCode;
 }
 
-int TR_appendNewBlock(Record* this, DWORD* newBlockAddress)
+int TR_appendNewBlock(Record* this, DWORD* const newBlockAddress)
 {
     int returnCode = 0;
     BYTE changedBlock[fileSystem.superBlock.BlockSize];
