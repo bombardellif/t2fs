@@ -12,6 +12,8 @@ void FP_FilePath(FilePath* this, char* path)
     this->pathWithoutLastNode = this->path = this->currentToken = NULL;
     this->parsed = FALSE;
     this->tokenWasRetrieved = TRUE;
+    this->pathWithoutLastNode = NULL;
+    this->pathLastNode = NULL;
     
     if (path) {
 
@@ -39,9 +41,6 @@ void FP_FilePath(FilePath* this, char* path)
             
             // copy from path to pathLastNode since the last delimiter until the end
             strcpy(this->pathLastNode, lastDelim+1);
-        } else {
-            this->pathWithoutLastNode = NULL;
-            this->pathLastNode = NULL;
         }
         
     }
