@@ -137,7 +137,7 @@ int IB_findBlockByNumber(IndirectionBlock* this, int level, DWORD number, BYTE* 
         if (blockAddressPtr && this->dataPtr[singleIndPointerNumber] == FS_NULL_BLOCK_POINTER) {
             
             // allocate a new indirection pointer and continue to find
-            if ((returnCode = TR_allocateNewIndirectionBlock(block, &this->dataPtr[singleIndPointerNumber]) == 0)) {
+            if ((returnCode = TR_allocateNewIndirectionBlock(block, &this->dataPtr[singleIndPointerNumber])) == 0) {
                 
                 IndirectionBlock indirectionBlock;
                 IB_IndirectionBlock(&indirectionBlock, block);
@@ -180,7 +180,7 @@ int IB_freeBlocks(IndirectionBlock* this, int level)
             
             // free this block, if an error happens, break the loop and returns the error code
             if (this->dataPtr[i] != FS_NULL_BLOCK_POINTER) {
-                if ((returnCode = FSM_delete(this->dataPtr[i]) != 0)) {
+                if ((returnCode = FSM_delete(this->dataPtr[i])) != 0) {
                     break;
                 }
             }

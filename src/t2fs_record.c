@@ -450,7 +450,7 @@ int TR_findBlockByNumber(Record* this, DWORD number, BYTE* block, DWORD* blockAd
         if (blockAddressPtr && this->singleIndPtr == FS_NULL_BLOCK_POINTER) {
             
             // allocate a new indirection pointer and continue to find
-            if ((returnCode = TR_allocateNewIndirectionBlock(block, &this->singleIndPtr) == 0)) {
+            if ((returnCode = TR_allocateNewIndirectionBlock(block, &this->singleIndPtr)) == 0) {
                 
                 IndirectionBlock indirectionBlock;
                 IB_IndirectionBlock(&indirectionBlock, block);
@@ -486,7 +486,7 @@ int TR_findBlockByNumber(Record* this, DWORD number, BYTE* block, DWORD* blockAd
         if (blockAddressPtr && this->doubleIndPtr == FS_NULL_BLOCK_POINTER) {
             
             // allocate a new indirection pointer and continue to find
-            if ((returnCode = TR_allocateNewIndirectionBlock(block, &this->doubleIndPtr) == 0)) {
+            if ((returnCode = TR_allocateNewIndirectionBlock(block, &this->doubleIndPtr)) == 0) {
                 
                 IndirectionBlock indirectionBlock;
                 IB_IndirectionBlock(&indirectionBlock, block);
