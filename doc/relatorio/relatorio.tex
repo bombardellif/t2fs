@@ -1,0 +1,270 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Structured General Purpose Assignment
+% LaTeX Template
+%
+% This template has been downloaded from:
+% http://www.latextemplates.com
+%
+% Original author:
+% Ted Pavlic (http://www.tedpavlic.com)
+%
+% Note:
+% The \lipsum[#] commands throughout this template generate dummy text
+% to fill the template out. These commands should all be removed when 
+% writing assignment content.mus
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%----------------------------------------------------------------------------------------
+%	PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
+%----------------------------------------------------------------------------------------
+
+\documentclass{article}
+
+\usepackage[brazilian]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{fancyhdr} % Required for custom headers
+\usepackage{lastpage} % Required to determine the last page for the footer
+\usepackage{extramarks} % Required for headers and footers
+\usepackage{graphicx} % Required to insert images
+\usepackage{float}
+\usepackage{listings}
+\usepackage[colorlinks=true, pdfborder={0 0 0}, urlcolor=blue, linkcolor=black]{hyperref}
+
+\graphicspath{ {img/} }
+
+% Margins
+\topmargin=-0.45in
+\evensidemargin=0in
+\oddsidemargin=0in
+\textwidth=6.5in
+\textheight=9.0in
+\headsep=0.25in 
+
+\linespread{1.1} % Line spacing
+
+% Set up the header and footer
+\pagestyle{fancy}
+\lhead{\hmwkAuthorName} % Top left header
+%\chead{\hmwkClass\ (\hmwkClassInstructor\ \hmwkClassTime): \hmwkTitle} % Top center header
+\rhead{\hmwkClass: \hmwkTitle} % Top center header
+%\rhead{\firstxmark} % Top right header
+\lfoot{\lastxmark} % Bottom left footer
+\cfoot{} % Bottom center footer
+\rfoot{Página\ \thepage\ de\ \pageref{LastPage}} % Bottom right footer
+\renewcommand\headrulewidth{0.4pt} % Size of the header rule
+\renewcommand\footrulewidth{0.4pt} % Size of the footer rule
+
+\setlength\parindent{0pt} % Removes all indentation from paragraphs
+
+%----------------------------------------------------------------------------------------
+%	DOCUMENT STRUCTURE COMMANDS
+%	Skip this unless you know what you're doing
+%----------------------------------------------------------------------------------------
+
+% Header and footer for when a page split occurs within a problem environment
+\newcommand{\enterProblemHeader}[1]{
+\nobreak\extramarks{#1}{#1 continuação na próxima página\ldots}\nobreak
+\nobreak\extramarks{#1 (continuação)}{#1 continuação na próxima página\ldots}\nobreak
+}
+
+% Header and footer for when a page split occurs between problem environments
+\newcommand{\exitProblemHeader}[1]{
+\nobreak\extramarks{#1 (continuação)}{#1 continuação na próxima página\ldots}\nobreak
+\nobreak\extramarks{#1}{}\nobreak
+}
+
+\setcounter{secnumdepth}{0} % Removes default section numbers
+\newcounter{homeworkProblemCounter} % Creates a counter to keep track of the number of problems
+
+\newcommand{\homeworkProblemName}{}
+\newenvironment{homeworkProblem}[1][Questão \arabic{homeworkProblemCounter}]{ % Makes a new environment called homeworkProblem which takes 1 argument (custom name) but the default is "Problem #"
+\stepcounter{homeworkProblemCounter} % Increase counter for number of problems
+\renewcommand{\homeworkProblemName}{#1} % Assign \homeworkProblemName the name of the problem
+\section{\homeworkProblemName} % Make a section in the document with the custom problem count
+\enterProblemHeader{\homeworkProblemName} % Header and footer within the environment
+}{
+\exitProblemHeader{\homeworkProblemName} % Header and footer after the environment
+}
+
+\newcommand{\problemAnswer}[1]{ % Defines the problem answer command with the content as the only argument
+\noindent\framebox[\columnwidth][c]{\begin{minipage}{0.98\columnwidth}#1\end{minipage}} % Makes the box around the problem answer and puts the content inside
+}
+
+\newcommand{\homeworkSectionName}{}
+\newenvironment{homeworkSection}[1]{ % New environment for sections within homework problems, takes 1 argument - the name of the section
+\renewcommand{\homeworkSectionName}{#1} % Assign \homeworkSectionName to the name of the section from the environment argumen
+\subsection{\homeworkSectionName} % Make a subsection with the custom name of the subsection
+\enterProblemHeader{\homeworkProblemName\ [\homeworkSectionName]} % Header and footer within the environment
+}{
+\enterProblemHeader{\homeworkProblemName} % Header and footer after the environment
+}
+   
+%----------------------------------------------------------------------------------------
+%	NAME AND CLASS SECTION
+%----------------------------------------------------------------------------------------
+
+\newcommand{\hmwkTitle}{Trabalho \#2} % Assignment title
+\newcommand{\hmwkDueDate}{01 de julho de 2014} % Due date
+\newcommand{\hmwkClass}{INF01142} % Course/class
+\newcommand{\hmwkClassFull}{INF01142: Sistemas Operacionais I N} % Course/class
+\newcommand{\hmwkClassTime}{} % Class/lecture time
+\newcommand{\hmwkClassInstructor}{} % Teacher/lecturer
+\newcommand{\hmwkAuthorName}{Fernando Bombardelli da Silva(218324), William Bombardelli da Silva(218323)} % Your name
+
+%----------------------------------------------------------------------------------------
+%	TITLE PAGE
+%----------------------------------------------------------------------------------------
+
+\title{
+%\vspace{2in}
+\Large\textmd{\textbf{\hmwkClassFull}}\\
+\normalsize{\textbf{\hmwkTitle}}\\
+\normalsize\vspace{0.1in}\small{\hmwkDueDate}\\
+%\vspace{0.1in}
+\large{\textit{\hmwkClassInstructor\ \hmwkClassTime}}
+%\vspace{3in}
+}
+
+\author{\textbf{\hmwkAuthorName}}
+\date{} % Insert date here if you want it to appear below your name
+
+%----------------------------------------------------------------------------------------
+
+\begin{document}
+
+%\maketitle
+{\centering
+\Large\textmd{\textbf{\hmwkClassFull}}\\
+\normalsize{\textbf{\hmwkTitle}}\\
+\normalsize\vspace{0.1in}\small{\hmwkDueDate}\\
+%\vspace{0.1in}
+\large\textbf{\hmwkAuthorName}
+%\large{\textit{\hmwkClassInstructor\ \hmwkClassTime}}\\
+
+}
+%----------------------------------------------------------------------------------------
+%	TABLE OF CONTENTS
+%----------------------------------------------------------------------------------------
+
+%\setcounter{tocdepth}{1} % Uncomment this line if you don't want subsections listed in the ToC
+
+%\newpage
+%\tableofcontents
+%\newpage
+
+% To have just one problem per page, simply put a \clearpage after each problem
+
+%----------------------------------------------------------------------------------------
+%	Questão 1
+%----------------------------------------------------------------------------------------
+
+\begin{homeworkProblem}[Questão 1]
+Desconsiderando a quantidade de ponteiros de alocação indexada, o tamanho do bloco (BlockSize) do sistema de arquivos influencia  no maior tamanho de arquivo T2FS possível. Quanto maior o tamanho de bloco, mais dados cabem nos blocos apontados diretamente pelo registro de diretório (campo dataPtr do t2fs\_record) e mais blocos são apontados pelos ponteiros de indireção (pois os blocos de índice são maiores).
+\end{homeworkProblem}
+
+%----------------------------------------------------------------------------------------
+%	Questão 2
+%----------------------------------------------------------------------------------------
+
+\begin{homeworkProblem}[Questão 2]
+ Para criar \emph{hardlinks} é necessário criar um novo tipo de registro de diretório (nova possibilidade para o campo TypeVal do t2fs\_record); alterar a função de criação de arquivo (t2fs\_create); e naturalmente alterar a função de navegação nos diretórios, para que seja possível usar o \emph{hardlink}.
+\end{homeworkProblem}
+
+%----------------------------------------------------------------------------------------
+%	Questão 3
+%----------------------------------------------------------------------------------------
+
+\begin{homeworkProblem}[Questão 3]
+Alguns dos elementos redundante são:
+
+\begin{itemize}
+\item 1: A relação entre o tamanho do arquivo em bytes (campo bytesFileSize de t2fs\_record) e a quantidade de blocos usados (campo blocksFileSize de t2fs\_record).
+\item 2: A relação entre a quantidade de blocos realmente usadas (verificadas através da contagem dos blocos de um arquivo) e o valor no campo blockFileSize de t2fs\_record.
+\item 3: A relação entre a quantidade de blocos de um arquivo (campo blocksFileSize de t2fs\_record) e a quantidade de blocos da partição (campo NofBlocks de t2fs\_superbloco).
+\item 4: A relação entre o tamanho de um arquivo (campo bytesFileSize de t2fs\_record) e o tamanho da partição (campo DiskSize de t2fs\_superbloco).
+\item 5: A relação entre a quantidade de espaço ocupado indicado pelo bitmap e a quantidade real de espaço ocupado (contagem dos ponteiros para blocos do sistema de arquivos).
+\end{itemize}
+
+Poderia-se criar métodos de verificação em cada um dos itens enumerados acima, que seria chamado a cada operação e verificaria a consistência do sistema de arquivos. Em especial, para o item 2 pode ser criado um utilitário de verificação (file system check), que contaria a quantidade de blocos de cada arquivo e verificaria a consistencia dos valores no registro.
+\end{homeworkProblem}
+
+%----------------------------------------------------------------------------------------
+%	Questão 4
+%----------------------------------------------------------------------------------------
+
+\begin{homeworkProblem}[Questão 4]
+Utilizou-se duas \emph{arrays} para controlar os arquivos abertos:
+
+\begin{itemize}
+\item \emph{openRecords}: Contem os registros abertos, isto é, mantem as entradas de diretório abertas atualmente. Cada arquivo aberto contem apenas um registro na \emph{openRecords}.
+\item \emph{openFiles}: Contem as instâncias de arquivos abertos, isto é, guarda uma instância da estrutura \emph{OpenFile}, que contem o índice do registro do arquivo em \emph{openRecords} e a posição atual no arquivo. Um arquivo aberto pode ter mais de uma entrada em \emph{openFiles}.
+\end{itemize}
+
+\begin{lstlisting}[language=C, frame=single]
+typedef struct s_OpenFile{
+	int recordIndex;
+    unsigned int currentPosition;
+} OpenFile;
+\end{lstlisting}
+
+Notar que esta organização possibilita a abertura de um arquivo simultaneamente por mais de um usuário.
+
+Criou-se uma função (FS\_createHandle) utilizada por ambas funções t2fs\_create e t2fs\_open. A FS\_createHandle cria uma entrada em \emph{openRecords} para o arquivo requisitado (se este já não estiver aberto) e cria uma entrada em \emph{openFiles} que aponta para o \emph{openRecord} do arquivo requisitado. Retorna o índice da nova entrada de \emph{openFiles} em caso de sucesso.
+\end{homeworkProblem}
+
+%----------------------------------------------------------------------------------------
+%	Questão 5
+%----------------------------------------------------------------------------------------
+
+\begin{homeworkProblem}[Questão 5]
+Para controlar a posição do ponteiro no arquivo, basta acessar a entrada desejada em \emph{openFiles} e acessar o campo \emph{currentPosition}. A função \emph{t2fs\_seek} atribui um novo valor para este campo. Ou posiciona para o fim do arquivo se \emph{offset = -1}.
+\end{homeworkProblem}
+
+%----------------------------------------------------------------------------------------
+%	Questão 6
+%----------------------------------------------------------------------------------------
+
+\begin{homeworkProblem}[Questão 6]
+Como o t2fs\_record está em memória (mantido em \emph{openRecords}), não é necessário navegar na estrutura de arquivos, porém é necessário carregar o bloco no qual se deseja escrever. Para isso diversas leituras de blocos de indireção podem ocorrer.
+
+No caso do bloco em que se deseja escrever não existe no disco (p.e. aumento de um arquivo), é necessário criar um bloco de dados novo, e possivelmente criar novos blocos de indireção ou atualizar a entrada de diretório do arquivo (p.e. atualização do campo \emph{dataPtr}). O sistema cria primeiramente o bloco de arquivo, depois os blocos de indireção (se houver necessidade) e finalmente, se todos os blocos foram criados com sucesso, atualiza a entrada de diretório do arquivo desejado.
+
+Neste segundo caso, pode ocorrer inconsistência dos dados em disco pelo fato de, durante o processo, vários blocos de dados ou blocos de indireção podem ter sido criados e não terem sido "ligados" entre si, pois a sequência fora interrompida entre o salvamento de um bloco e outro.
+
+Supor, por exemplo, que um novo bloco de dados suposto a ser apontado pelo \emph{dataPtr} de uma entrada de diretório é criado e salvo no disco e, então, ocorre queda de energia. O bloco agora ocupa uma posição no disco (pois requisitou espaço ao bitmap) e não é apontado pela entrada de diretório do arquivo.
+
+Portanto, ocorre inconsistência entre os dados do bitmap e a verdadeira quantidade de blocos utilizados.
+Para minimizar este problema, deve-se minimizar o tempo entre a alocação do bloco de dados e a atualização do registro de dados do arquivo.
+\end{homeworkProblem}
+
+%----------------------------------------------------------------------------------------
+%	Questão 7
+%----------------------------------------------------------------------------------------
+
+\begin{homeworkProblem}[Questão 7]
+Apenas os registros de diretório (t2fs\_record) abertos são mantidos e gerenciados em memória. Porém, cada alteração destes dados são replicados para o disco no momento da alteração. Assim, se esses dados guardados em memória fossem vistos como uma cache, a política de escrita seria write-through.
+
+Esta escolha foi feita para facilitar a implementação do sistema de arquivos, pois elimina a necessidade de implementação de politicas sofisticadas de controle de atualização e aumenta a segurança, diminuindo chance perda de dados.
+\end{homeworkProblem}
+
+%----------------------------------------------------------------------------------------
+%	Questão 8
+%----------------------------------------------------------------------------------------
+
+\begin{homeworkProblem}[Questão 8]
+Todas as funções implementadas funcionam corretamente de acordo com a especificação. Foi desenvolvida uma suíte de teste unitário para cada módulo principal do sistema. Cada suíte de testes unitários testa cada função do módulo. A estratégia para construção dos casos de teste foi o whitebox e blackbox, isto é, baseia-se no código-fonte e na especificação. Os códigos-fonte dos testes estão na pasta \emph{teste}.
+\end{homeworkProblem}
+
+%----------------------------------------------------------------------------------------
+%	Questão 9
+%----------------------------------------------------------------------------------------
+
+\begin{homeworkProblem}[Questão 9]
+A primeira dificuldade encontrada está na dificuldade de modelagem do sistema, isto é, a dificuldade de abstrair o problema $-$ que é tipicamente de baixo nível $-$ em um sistema de alto nível que seja capaz de resolvê-lo de maneira a permitir a reusabilidade do código. A implementação do sistema também mostra-se complexa pelas estruturas de dados do sistema de arquivos, que não permitem a fácil reusabilidade do código, criando assim grande reescrita de código.
+
+Por estes e outros motivos a implementação apresenta grande volume de código escrito, o que representa muito trabalho braçal e custoso, aumentando consideravelmente o tempo necessário para cumprir todos os requisitos da especificação.
+\end{homeworkProblem}
+
+\end{document}
+
